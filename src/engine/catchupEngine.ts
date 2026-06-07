@@ -1,7 +1,7 @@
 // Motor de calendarios acelerados — genera el plan de visitas
 // Fuente: Tablas 3 y 4, Guía Calendarios Acelerados ANDAVAC 2026 (feb 2026)
 import { addDays } from 'date-fns'
-import { AgeGroup, VaccineId, VaccineStatus, VisitPlan, VisitVaccine } from '../types'
+import type { AgeGroup, VaccineId, VaccineStatus, VisitPlan, VisitVaccine } from '../types'
 import { CATCHUP_SCHEDULES } from '../data/catchupSchedules'
 import { getVaccineDef } from '../data/vaccines'
 

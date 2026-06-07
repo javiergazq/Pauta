@@ -1,5 +1,5 @@
 // Orquestador principal — punto de entrada único del motor
-import { PatientData, VaccinationInput, VaccinationResult, VaccineStatus, VisitVaccine } from '../types'
+import type { PatientData, VaccinationInput, VaccinationResult, VaccineStatus, VisitVaccine } from '../types'
 import { calculateAge } from './ageCalculator'
 import { getRequirements } from './requirementEngine'
 import { validateDoses, countValidDoses } from './doseValidator'

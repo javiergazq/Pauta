@@ -7,7 +7,7 @@
 //   - Atenuada + inactivada: sin restricción — siempre juntas
 //   - Atenuada + atenuada (TV, VVZ, RV): mismo día OBLIGATORIO o separadas ≥28 días
 //     → Las tablas ya agrupan atenuadas en la misma visita para cumplir esta regla
-import { AgeGroup, VaccineId } from '../types'
+import type { AgeGroup, VaccineId } from '../types'
 
 export interface CatchupVisitTemplate {
   label: string      // "HOY", "+1 mes", "+2 meses", "+8 meses"

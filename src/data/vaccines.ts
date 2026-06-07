@@ -1,7 +1,7 @@
 // Catálogo de vacunas e intervalos mínimos entre dosis
 // Fuente: Guía Calendarios Acelerados ANDAVAC 2026 (feb 2026), Tablas 1 y 2
 // ANDAVAC 2026 — actualizar anualmente
-import { VaccineDef, VaccineId, VaccineIntervals } from '../types'
+import type { VaccineDef, VaccineId, VaccineIntervals } from '../types'
 
 export const VACCINES: VaccineDef[] = [
   {

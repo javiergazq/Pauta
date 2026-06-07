@@ -4,7 +4,7 @@ import {
   differenceInMonths,
   differenceInYears,
 } from 'date-fns'
-import { AgeData, AgeGroup } from '../types'
+import type { AgeData, AgeGroup } from '../types'
 
 export function calculateAge(birthDate: Date, evaluationDate: Date): AgeData {
   const days = differenceInDays(evaluationDate, birthDate)

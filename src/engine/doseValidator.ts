@@ -2,7 +2,7 @@
 // Fuente: Normas Generales, Guía Calendarios Acelerados ANDAVAC 2026
 // ANDAVAC 2026 — actualizar anualmente si cambia el periodo de gracia
 import { differenceInDays } from 'date-fns'
-import { DoseValidity } from '../types'
+import type { DoseValidity } from '../types'
 
 // Periodo de gracia: dosis inactivada hasta 4 días antes del intervalo mínimo → válida
 // Dosis administrada 5+ días antes → INVÁLIDA, debe repetirse

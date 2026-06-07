@@ -2,7 +2,7 @@
 // Fuente: Tablas 1 y 2, Guía Calendarios Acelerados ANDAVAC 2026 (feb 2026)
 // ANDAVAC 2026 — actualizar anualmente
 import { differenceInWeeks } from 'date-fns'
-import { PatientData, RequiredVaccine, VaccineId } from '../types'
+import type { PatientData, RequiredVaccine, VaccineId } from '../types'
 import { calculateAge } from './ageCalculator'
 
 // Solo nacidos a partir del 1/10/2021 entran en el calendario sistemático de MenB
@@ -33,7 +33,7 @@ function buildUnder7(
   months: number,
   ageWeeks: number,
   birthDate: Date,
-  conditions: string[]
+  _conditions: string[]  // v2: usar para grupos de riesgo (neumococo, meningococo)
 ): RequiredVaccine[] {
 
   // MenB: solo para nacidos a partir del 1/10/2021 y menores de 7 años
