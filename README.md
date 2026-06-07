@@ -3,7 +3,7 @@
 Herramienta de consulta rápida del calendario vacunal infantil, pensada para
 agilizar la revisión en consulta de enfermería. Dado un paciente y las dosis
 ya recibidas, calcula qué vacunas tocan hoy, cuáles faltan y cuándo corresponde
-la siguiente cita — siguiendo la Guía de Calendarios Acelerados ANDAVAC 2026
+la siguiente cita, siguiendo la Guía de Calendarios Acelerados ANDAVAC 2026
 (Andalucía).
 
 La lógica es completamente determinista (sin IA): un motor de reglas evalúa
