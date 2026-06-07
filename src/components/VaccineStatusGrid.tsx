@@ -11,66 +11,80 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
   const applicable = requirements.filter(r => r.applicable)
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-5">
-      <h2 className="text-lg font-bold text-gray-800 mb-1">¿Cuántas dosis tiene?</h2>
-      <p className="text-sm text-gray-500 mb-4">
-        Toca el número de dosis recibidas de cada vacuna.
-      </p>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-4 pt-4 pb-2">
+        <h2 className="text-base font-bold text-gray-800">Dosis recibidas</h2>
+        <p className="text-xs text-gray-400 mt-0.5">Toca el número de dosis que ya tiene puestas</p>
+      </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="divide-y divide-gray-50">
         {applicable.map(req => {
           const vaccine = VACCINES.find(v => v.id === req.vaccineId)!
           const count = doseCounts.find(d => d.vaccineId === req.vaccineId)?.count ?? 0
           const isComplete = count >= req.minDoses
           const isMissing = count === 0
+          const maxButtons = Math.max(req.minDoses, vaccine.maxDoses)
 
-          const borderColor = isComplete
-            ? 'border-green-400 bg-green-50'
+          // Franja lateral de color según estado
+          const sideColor = isComplete
+            ? 'bg-emerald-500'
             : isMissing
-            ? 'border-red-300 bg-red-50'
-            : 'border-yellow-400 bg-yellow-50'
+            ? 'bg-red-400'
+            : 'bg-amber-400'
 
           return (
-            <div key={req.vaccineId} className={`border-2 rounded-xl p-3 transition-all ${borderColor}`}>
-              <div className="flex items-center justify-between mb-2 gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${vaccine.color}`} />
-                  <span className="font-semibold text-sm text-gray-800 leading-tight">
-                    {vaccine.name}
-                  </span>
-                  {vaccine.type === 'live' && (
-                    <span className="text-xs bg-purple-100 text-purple-700 rounded px-1 flex-shrink-0">atenuada</span>
-                  )}
+            <div key={req.vaccineId} className="flex items-stretch">
+              {/* Franja lateral de estado */}
+              <div className={`w-1 flex-shrink-0 ${sideColor}`} />
+
+              <div className="flex-1 px-4 py-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${vaccine.color}`} />
+                      <span className="text-sm font-semibold text-gray-800 leading-tight">
+                        {vaccine.name}
+                      </span>
+                    </div>
+                    {vaccine.type === 'live' && (
+                      <span className="text-xs text-purple-600 ml-4">vacuna atenuada</span>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    {isComplete ? (
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✓ Al día</span>
+                    ) : (
+                      <span className="text-xs text-gray-400">{count}/{req.minDoses}</span>
+                    )}
+                  </div>
                 </div>
-                <span className="flex-shrink-0 text-xs font-medium whitespace-nowrap">
-                  {isComplete
-                    ? <span className="text-green-700 font-semibold">✓ Al día</span>
-                    : <span className="text-gray-500">{count}/{req.minDoses} dosis</span>
-                  }
-                </span>
-              </div>
 
-              {/* Selector: 0 hasta el máximo histórico posible (no solo el mínimo requerido) */}
-              <div className="flex gap-1">
-                {Array.from({ length: Math.max(req.minDoses, vaccine.maxDoses) + 1 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => onChange(req.vaccineId, i)}
-                    className={`flex-1 py-2 text-sm rounded-lg font-bold transition-colors ${
-                      count === i
-                        ? 'bg-gray-700 text-white shadow-sm'
-                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 active:bg-gray-100'
-                    }`}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
+                {/* Botones de selección — mínimo 48px de altura (táctil) */}
+                <div className="flex gap-1.5">
+                  {Array.from({ length: maxButtons + 1 }, (_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onChange(req.vaccineId, i)}
+                      className={`flex-1 min-h-[48px] rounded-xl text-base font-bold transition-all ${
+                        count === i
+                          ? i === 0
+                            ? 'bg-red-500 text-white shadow-sm scale-95'
+                            : i >= req.minDoses
+                            ? 'bg-emerald-500 text-white shadow-sm scale-95'
+                            : 'bg-amber-400 text-white shadow-sm scale-95'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200 active:bg-gray-300'
+                      }`}
+                    >
+                      {i}
+                    </button>
+                  ))}
+                </div>
 
-              {req.note && (
-                <p className="text-xs text-gray-400 mt-1.5 italic">{req.note}</p>
-              )}
+                {req.note && (
+                  <p className="text-xs text-gray-400 mt-1.5 italic">{req.note}</p>
+                )}
+              </div>
             </div>
           )
         })}

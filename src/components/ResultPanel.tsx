@@ -8,64 +8,107 @@ interface Props {
   onReset: () => void
 }
 
-export function ResultPanel({ result, onReset }: Props) {
+export function ResultPanel({ result, onReset: _onReset }: Props) {
   const { vaccineStatuses, isUpToDate, catchupPlan, ageData } = result
   const applicable = vaccineStatuses.filter(s => s.status !== 'not_applicable')
   const missing = applicable.filter(s => s.status !== 'complete')
+  const complete = applicable.filter(s => s.status === 'complete')
   const nonEmptyVisits = catchupPlan.filter(p => p.vaccines.length > 0)
   const todayVisit = catchupPlan.find(p => p.label === 'HOY')
+  const futureVisits = nonEmptyVisits.filter(p => p.label !== 'HOY')
 
   const ageLabel = ageData.years > 0
     ? `${ageData.years} año${ageData.years > 1 ? 's' : ''}${ageData.months % 12 > 0 ? ` ${ageData.months % 12} m` : ''}`
-    : ageData.months > 0
-    ? `${ageData.months} meses`
-    : `${ageData.weeks} semanas`
+    : ageData.months > 0 ? `${ageData.months} meses` : `${ageData.weeks} semanas`
 
   return (
-    <div className="space-y-4">
-      {/* Cabecera de resultado */}
-      <div className={`rounded-2xl p-5 border-2 ${
+    <div className="space-y-4 pb-6">
+
+      {/* ─── Estado global ─── */}
+      <div className={`rounded-2xl p-5 ${
         isUpToDate
-          ? 'bg-green-50 border-green-400'
-          : 'bg-amber-50 border-amber-400'
+          ? 'bg-emerald-500 text-white'
+          : 'bg-white border-2 border-amber-400'
       }`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className={`text-xl font-bold ${isUpToDate ? 'text-green-700' : 'text-amber-700'}`}>
-              {isUpToDate
-                ? '✓ Calendario al día'
-                : `⚠ Faltan ${missing.length} vacuna${missing.length > 1 ? 's' : ''}`
-              }
-            </p>
-            <p className="text-sm text-gray-500 mt-1">{ageLabel}</p>
+        {isUpToDate ? (
+          <div className="flex items-center gap-3">
+            <div className="text-4xl">✓</div>
+            <div>
+              <p className="text-xl font-bold">Calendario al día</p>
+              <p className="text-emerald-100 text-sm">{ageLabel} · Sin dosis pendientes</p>
+            </div>
           </div>
-          <button
-            onClick={onReset}
-            className="text-sm text-gray-400 underline hover:text-gray-600 whitespace-nowrap"
-          >
-            Nueva consulta
-          </button>
-        </div>
+        ) : (
+          <div>
+            <p className="text-amber-700 font-bold text-lg">
+              ⚠ {missing.length} vacuna{missing.length > 1 ? 's' : ''} pendiente{missing.length > 1 ? 's' : ''}
+            </p>
+            <p className="text-gray-500 text-sm mt-0.5">
+              {ageLabel} · {complete.length} al día · {missing.length} por completar
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Resumen por vacuna */}
-      <div className="bg-white rounded-2xl shadow-md p-5">
-        <h3 className="font-bold text-gray-800 mb-3">Estado vacunal</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {/* ─── HOY: tarjeta hero ─── */}
+      {todayVisit && todayVisit.vaccines.length > 0 && (
+        <div className="bg-blue-600 rounded-2xl p-5 shadow-lg">
+          <p className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-3">Administrar hoy</p>
+          <div className="flex flex-wrap gap-2">
+            {todayVisit.vaccines.map(v => {
+              const vaccine = VACCINES.find(vac => vac.id === v.vaccineId)!
+              return (
+                <div key={v.vaccineId} className="bg-white/20 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2">
+                  <span className={`w-3 h-3 rounded-full ${vaccine.color}`} />
+                  <div>
+                    <p className="text-white font-bold text-sm">{vaccine.shortName}</p>
+                    <p className="text-blue-200 text-xs">{v.doseNumber}ª dosis</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {todayVisit.hasLiveVaccines && (
+            <p className="text-blue-200 text-xs mt-3 bg-white/10 rounded-lg px-3 py-2">
+              ⚠ Vacunas atenuadas presentes — administrar el mismo día o separar ≥28 días
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ─── Próximas visitas ─── */}
+      {futureVisits.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">Próximas citas</p>
+          <div className="space-y-3">
+            {futureVisits.map(visit => (
+              <VisitCard key={visit.label} visit={visit} isToday={false} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Resumen estado vacunal (colapsado) ─── */}
+      <details className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <summary className="px-5 py-4 font-semibold text-gray-700 text-sm cursor-pointer hover:bg-gray-50 list-none flex justify-between items-center">
+          Estado vacunal completo
+          <span className="text-gray-400 text-xs">{complete.length}/{applicable.length} al día ▼</span>
+        </summary>
+        <div className="px-5 pb-4 pt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {applicable.map(s => {
             const vaccine = VACCINES.find(v => v.id === s.vaccineId)!
             const colorClass =
-              s.status === 'complete' ? 'bg-green-100 text-green-800 border-green-200' :
-              s.status === 'missing'  ? 'bg-red-100 text-red-800 border-red-200' :
-                                        'bg-yellow-100 text-yellow-800 border-yellow-200'
+              s.status === 'complete' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+              s.status === 'missing'  ? 'bg-red-50 text-red-800 border-red-200' :
+                                        'bg-amber-50 text-amber-800 border-amber-200'
             return (
               <div key={s.vaccineId} className={`rounded-xl border px-3 py-2 text-xs ${colorClass}`}>
-                <div className="font-bold">{vaccine.shortName}</div>
-                <div className="mt-0.5">
-                  {s.status === 'complete'
-                    ? '✓ Completo'
-                    : `${s.valid}/${s.required} dosis`
-                  }
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`w-2 h-2 rounded-full ${vaccine.color}`} />
+                  <span className="font-bold">{vaccine.shortName}</span>
+                </div>
+                <div>
+                  {s.status === 'complete' ? '✓ Completo' : `${s.valid}/${s.required} dosis`}
                 </div>
                 {s.doseValidity?.some(d => !d.isValid) && (
                   <div className="text-red-600 font-semibold mt-0.5">⚠ dosis inválida</div>
@@ -74,25 +117,14 @@ export function ResultPanel({ result, onReset }: Props) {
             )
           })}
         </div>
-      </div>
+      </details>
 
-      {/* Plan de visitas */}
-      {!isUpToDate && nonEmptyVisits.length > 0 && (
-        <div>
-          <h3 className="font-bold text-gray-800 mb-3">Plan de vacunación</h3>
-          <div className="space-y-3">
-            {catchupPlan.map((visit, i) => (
-              <VisitCard key={visit.label} visit={visit} isToday={i === 0} />
-            ))}
-          </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">
-            Guía Calendarios Acelerados · Junta de Andalucía 2026
-          </p>
-        </div>
-      )}
-
-      {/* Nota para Diraya — siempre visible */}
+      {/* ─── Nota Diraya ─── */}
       <DirayaNote todayVisit={todayVisit} />
+
+      <p className="text-center text-xs text-gray-400">
+        Guía Calendarios Acelerados · Junta de Andalucía 2026
+      </p>
     </div>
   )
 }

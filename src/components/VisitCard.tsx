@@ -11,23 +11,22 @@ interface Props {
 export function VisitCard({ visit, isToday }: Props) {
   if (visit.vaccines.length === 0) return null
 
+  // La tarjeta HOY se renderiza en ResultPanel directamente como hero
+  // Este componente es para las visitas futuras
+  if (isToday) return null
+
   return (
-    <div className={`rounded-2xl border-2 p-4 ${
-      isToday ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
-    }`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className={`font-bold text-lg ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
-          {visit.label}
-        </span>
-        {!isToday && visit.vaccines[0]?.minDate && (
-          <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-1">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <span className="font-bold text-gray-700">{visit.label}</span>
+        {visit.vaccines[0]?.minDate && (
+          <span className="text-xs text-gray-400">
             desde {format(visit.vaccines[0].minDate, "d MMM yyyy", { locale: es })}
           </span>
         )}
       </div>
 
-      {/* Chips de vacunas */}
-      <div className="flex flex-wrap gap-2">
+      <div className="px-4 py-3 flex flex-wrap gap-2">
         {visit.vaccines.map(v => {
           const vaccine = VACCINES.find(vac => vac.id === v.vaccineId)!
           return (
@@ -42,10 +41,9 @@ export function VisitCard({ visit, isToday }: Props) {
         })}
       </div>
 
-      {/* Aviso vacunas atenuadas */}
       {visit.hasLiveVaccines && (
-        <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-3">
-          ⚠ Vacunas atenuadas (TV, VVZ, RV): administrar todas el mismo día o separar ≥28 días entre ellas.
+        <p className="text-xs text-amber-600 px-4 pb-3">
+          ⚠ Vacunas atenuadas — administrar el mismo día o separar ≥28 días
         </p>
       )}
     </div>

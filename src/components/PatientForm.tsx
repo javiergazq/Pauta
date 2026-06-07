@@ -8,57 +8,71 @@ interface Props {
 interface ClinicalCondition {
   id: ConditionType
   label: string
-  detail: string
-  affects: string  // qué vacunas o pautas se ven afectadas
+  shortDetail: string  // visible siempre
+  fullDetail: string   // visible al expandir
+  affects: string
+  icon: string
 }
 
 const CLINICAL_CONDITIONS: ClinicalCondition[] = [
   {
     id: 'immunosuppression',
     label: 'Inmunosupresión',
-    detail: 'Quimioterapia activa · trasplante de órgano sólido o de progenitores hematopoyéticos · inmunodeficiencia primaria · corticoides sistémicos a dosis altas (≥2 mg/kg/día de prednisona o equivalente durante >14 días)',
-    affects: 'VPH: pauta de 3 dosis · Varicela y Triple vírica: contraindicadas si inmunodepresión severa',
+    icon: '🛡',
+    shortDetail: 'Quimioterapia · trasplante · inmunodeficiencia · corticoides altas dosis',
+    fullDetail: 'Quimioterapia activa, trasplante de órgano sólido o de progenitores hematopoyéticos, inmunodeficiencia primaria, corticoides sistémicos ≥2 mg/kg/día prednisona durante >14 días, biológicos inmunosupresores.',
+    affects: 'VPH: pauta 3 dosis · TV y Varicela: contraindicadas si inmunodepresión severa',
   },
   {
     id: 'hiv',
-    label: 'Infección por VIH',
-    detail: 'Niños y adolescentes con infección por VIH, independientemente del estadio clínico o carga viral. Si CD4 <15% o <200 células/μL, valorar como inmunosupresión grave.',
-    affects: 'Mismo manejo que inmunosupresión · VPH: pauta de 3 dosis',
+    label: 'VIH / SIDA',
+    icon: '⚕',
+    shortDetail: 'Infección por VIH en cualquier estadio',
+    fullDetail: 'Niños y adolescentes con infección por VIH, independientemente del estadio clínico, CD4 o carga viral. Si CD4 <15% o <200 células/μL, considerado inmunosupresión grave.',
+    affects: 'VPH: pauta 3 dosis · Igual manejo que inmunosupresión',
   },
   {
     id: 'asplenia',
     label: 'Asplenia / hipoesplenia',
-    detail: 'Asplenia anatómica (esplenectomía) o funcional · anemia drepanocítica (hemoglobina SS, SC, Sβ-talasemia) · talasemia mayor · otras hemoglobinopatías graves',
-    affects: 'VNC20: dosis adicionales grupo riesgo ENI · MenACWY y MenB: indicación ampliada',
+    icon: '◈',
+    shortDetail: 'Asplenia anatómica o funcional · drepanocitosis · talasemia mayor',
+    fullDetail: 'Asplenia anatómica (esplenectomía) o funcional, anemia drepanocítica (HbSS, SC, Sβ-talasemia), talasemia mayor u otras hemoglobinopatías graves con asplenia funcional.',
+    affects: 'VNC20: dosis extra (riesgo ENI) · MenACWY y MenB: indicación ampliada',
   },
   {
     id: 'chronic_disease',
-    label: 'Enfermedad crónica significativa',
-    detail: 'Cardiopatía congénita o adquirida hemodinámicamente significativa · enfermedad pulmonar crónica (asma grave, EPOC, fibrosis quística, displasia broncopulmonar) · hepatopatía crónica (cirrosis, hepatitis crónica activa) · nefropatía crónica o síndrome nefrótico · insuficiencia renal o diálisis · diabetes mellitus tipo 1 o 2 · obesidad mórbida',
-    affects: 'VNC20: indicación en grupos de riesgo de ENI · Gripe anual (v2)',
+    label: 'Enfermedad crónica',
+    icon: '♥',
+    shortDetail: 'Cardiopatía · neumopatía · hepatopatía · nefropatía · diabetes',
+    fullDetail: 'Cardiopatía congénita o adquirida hemodinámicamente significativa, enfermedad pulmonar crónica (asma grave, fibrosis quística, DBP), hepatopatía crónica, nefropatía crónica o diálisis, diabetes mellitus tipo 1 o 2, obesidad mórbida.',
+    affects: 'VNC20: indicación grupo riesgo ENI · Gripe anual (próxima versión)',
   },
   {
     id: 'cochlear_implant',
-    label: 'Implante coclear / fístula de LCR',
-    detail: 'Portador de implante coclear unilateral o bilateral · fístula congénita o adquirida de líquido cefalorraquídeo (incluye fístula post-traumática o post-quirúrgica)',
-    affects: 'VNC20: indicación prioritaria por alto riesgo de meningitis neumocócica',
+    label: 'Implante coclear / fístula LCR',
+    icon: '◉',
+    shortDetail: 'Implante coclear · fístula de líquido cefalorraquídeo',
+    fullDetail: 'Portador de implante coclear unilateral o bilateral, fístula congénita o adquirida de líquido cefalorraquídeo (post-traumática o post-quirúrgica).',
+    affects: 'VNC20: indicación prioritaria (alto riesgo meningitis neumocócica)',
   },
   {
     id: 'premature_lt35',
     label: 'Prematuro < 35 semanas',
-    detail: 'Nacido con menos de 35 semanas de edad gestacional, independientemente del peso al nacer. El calendario vacunal se aplica por edad cronológica, no corregida, salvo excepciones.',
-    affects: 'MenB: indicación en 2ª temporada VRS · Rotavirus: consentimiento informado en <27 sem',
+    icon: '◎',
+    shortDetail: 'Nacido con < 35 semanas de edad gestacional',
+    fullDetail: 'Nacido con menos de 35 semanas de EG, independientemente del peso. El calendario se aplica por edad cronológica salvo excepciones. En <27 semanas, se requiere consentimiento informado para Rotavirus.',
+    affects: 'MenB: indicación en 2ª temporada VRS · Rotavirus: CI en <27 semanas',
   },
 ]
 
 export function PatientForm({ onSubmit }: Props) {
   const [selectedConditions, setSelectedConditions] = useState<Set<ConditionType>>(new Set())
+  const [expandedId, setExpandedId] = useState<ConditionType | null>(null)
 
   function toggleCondition(id: ConditionType) {
     setSelectedConditions(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
   }
@@ -75,12 +89,16 @@ export function PatientForm({ onSubmit }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 p-5 bg-white rounded-2xl shadow-md">
-      <h2 className="text-lg font-bold text-gray-800">Datos del paciente</h2>
+    <form onSubmit={handleSubmit} className="space-y-5 p-5 bg-white rounded-2xl shadow-sm">
+      <div>
+        <h2 className="text-lg font-bold text-gray-800">Datos del paciente</h2>
+        <p className="text-xs text-gray-400 mt-0.5">Introduce la fecha de nacimiento para calcular el calendario</p>
+      </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex-1 min-w-48">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+      {/* Fecha y sexo */}
+      <div className="flex gap-3 flex-wrap">
+        <div className="flex-1 min-w-44">
+          <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
             Fecha de nacimiento
           </label>
           <input
@@ -88,16 +106,15 @@ export function PatientForm({ onSubmit }: Props) {
             name="birthDate"
             required
             max={new Date().toISOString().split('T')[0]}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Sexo</label>
           <select
             name="sex"
             required
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition-colors h-[42px]"
           >
             <option value="M">Masculino</option>
             <option value="F">Femenino</option>
@@ -105,49 +122,75 @@ export function PatientForm({ onSubmit }: Props) {
         </div>
       </div>
 
-      {/* Condiciones clínicas — siempre visibles con descripción */}
+      {/* Condiciones clínicas */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-0.5">Condiciones especiales</p>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            Condiciones especiales
+          </label>
+          <span className="text-xs text-gray-400">Opcional</span>
+        </div>
         <p className="text-xs text-gray-400 mb-3">
-          Marca si aplica — la app ajusta las recomendaciones automáticamente.
+          Selecciona si aplica — la app ajusta las recomendaciones automáticamente.
         </p>
+
         <div className="space-y-2">
           {CLINICAL_CONDITIONS.map(c => {
             const selected = selectedConditions.has(c.id)
+            const expanded = expandedId === c.id
+
             return (
-              <button
+              <div
                 key={c.id}
-                type="button"
-                onClick={() => toggleCondition(c.id)}
-                className={`w-full text-left border-2 rounded-xl px-4 py-3 transition-all ${
-                  selected
-                    ? 'border-blue-400 bg-blue-50'
-                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                className={`border-2 rounded-xl overflow-hidden transition-all ${
+                  selected ? 'border-blue-400' : 'border-gray-100'
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  {/* Checkbox visual */}
-                  <div className={`w-5 h-5 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${
-                    selected ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'
+                {/* Fila principal — tap para seleccionar */}
+                <button
+                  type="button"
+                  onClick={() => toggleCondition(c.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-colors ${
+                    selected ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex-shrink-0 border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                    selected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white text-gray-400'
                   }`}>
-                    {selected && <span className="text-white text-xs font-bold">✓</span>}
+                    {selected ? '✓' : ''}
                   </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-sm ${selected ? 'text-blue-800' : 'text-gray-800'}`}>
+                    <p className={`text-sm font-semibold ${selected ? 'text-blue-800' : 'text-gray-800'}`}>
                       {c.label}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      {c.detail}
-                    </p>
+                    <p className="text-xs text-gray-500 truncate">{c.shortDetail}</p>
+                  </div>
+                  {/* Botón expandir */}
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation()
+                      setExpandedId(expanded ? null : c.id)
+                    }}
+                    className="text-gray-400 hover:text-gray-600 text-xs px-1 py-1 flex-shrink-0"
+                  >
+                    {expanded ? '▲' : '▼'}
+                  </button>
+                </button>
+
+                {/* Detalle expandible */}
+                {expanded && (
+                  <div className={`px-4 py-3 border-t ${selected ? 'border-blue-100 bg-blue-50/50' : 'border-gray-100 bg-white'}`}>
+                    <p className="text-xs text-gray-600 leading-relaxed">{c.fullDetail}</p>
                     {selected && (
-                      <p className="text-xs text-blue-600 font-medium mt-1.5">
-                        Ajuste: {c.affects}
-                      </p>
+                      <div className="mt-2 flex items-start gap-1.5">
+                        <span className="text-blue-500 text-xs mt-0.5">→</span>
+                        <p className="text-xs text-blue-700 font-medium">{c.affects}</p>
+                      </div>
                     )}
                   </div>
-                </div>
-              </button>
+                )}
+              </div>
             )
           })}
         </div>
@@ -157,11 +200,16 @@ export function PatientForm({ onSubmit }: Props) {
             Sin condiciones → calendario sistemático estándar
           </p>
         )}
+        {selectedConditions.size > 0 && (
+          <p className="text-xs text-emerald-600 mt-2 text-center font-medium">
+            {selectedConditions.size} condición{selectedConditions.size > 1 ? 'es' : ''} seleccionada{selectedConditions.size > 1 ? 's' : ''} · recomendaciones ajustadas
+          </p>
+        )}
       </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors"
+        className="w-full bg-blue-600 text-white rounded-xl py-4 font-bold text-base hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm"
       >
         Ver calendario vacunal →
       </button>
