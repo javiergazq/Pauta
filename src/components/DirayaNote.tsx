@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check, Copy } from '@phosphor-icons/react'
 import type { VisitPlan } from '../types'
 import { VACCINES } from '../data/vaccines'
 
@@ -45,13 +46,14 @@ Se dan recomendaciones posteriores a la familia: vigilancia de reacciones locale
         <button
           type="button"
           onClick={handleCopy}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
             copied
               ? 'bg-green-100 text-green-700'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
           }`}
         >
-          {copied ? '✓ Copiado' : 'Copiar'}
+          {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}
+          {copied ? 'Copiado' : 'Copiar'}
         </button>
       </div>
 

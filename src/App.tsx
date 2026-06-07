@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check, ArrowRight } from '@phosphor-icons/react'
 import type {
   PatientData, VaccinationInput, VaccinationResult,
   VaccineId, DoseCount, DoseWithDate,
@@ -7,6 +8,7 @@ import { PatientForm } from './components/PatientForm'
 import { VaccineStatusGrid } from './components/VaccineStatusGrid'
 import { DoseDateInputs } from './components/DoseDateInputs'
 import { ResultPanel } from './components/ResultPanel'
+import { LegalNotice } from './components/LegalNotice'
 import { getRequirements } from './engine/requirementEngine'
 import { evaluatePatient } from './engine/vaccineEngine'
 import { calculateAge } from './engine/ageCalculator'
@@ -28,7 +30,7 @@ function StepBar({ step }: { step: Step }) {
               i === current ? 'bg-white text-blue-700 ring-2 ring-blue-600' :
               'bg-blue-800 text-blue-400'
             }`}>
-              {i < current ? '✓' : i + 1}
+              {i < current ? <Check size={14} weight="bold" /> : i + 1}
             </div>
             <span className={`text-xs mt-1 font-medium ${i === current ? 'text-white' : 'text-blue-300'}`}>
               {label}
@@ -119,7 +121,7 @@ export default function App() {
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight leading-none">PautaVac</h1>
+              <h1 className="text-lg font-extrabold tracking-tight leading-none">Pauta</h1>
               <p className="text-blue-300 text-xs mt-0.5">Calendarios vacunales · Andalucía 2026</p>
             </div>
             {step !== 'patient' && (
@@ -138,15 +140,7 @@ export default function App() {
       <main className="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
         {/* ─── Paso 1: Datos del paciente ─── */}
-        {step === 'patient' && (
-          <>
-            <PatientForm onSubmit={handlePatientSubmit} />
-            <p className="text-center text-xs text-gray-400 pb-2">
-              Basado en el Calendario de Vacunaciones e Inmunizaciones de Andalucía 2026
-              · Junta de Andalucía, Consejería de Sanidad
-            </p>
-          </>
-        )}
+        {step === 'patient' && <PatientForm onSubmit={handlePatientSubmit} />}
 
         {/* ─── Paso 2: Estado vacunal ─── */}
         {step === 'status' && patient && ageData && (
@@ -179,9 +173,10 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleCalculate}
-                className="w-full bg-blue-600 text-white rounded-2xl py-4 font-bold text-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xl"
+                className="w-full bg-blue-600 text-white rounded-2xl py-4 font-bold text-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xl flex items-center justify-center gap-2"
               >
-                Ver qué vacunas poner hoy →
+                Ver qué vacunas poner hoy
+                <ArrowRight size={20} weight="bold" />
               </button>
             </div>
           </>
@@ -193,6 +188,12 @@ export default function App() {
         )}
 
       </main>
+
+      <footer className="text-center text-xs text-gray-400 px-4 pb-6 space-y-1">
+        <p>Basado en el Calendario de Vacunaciones e Inmunizaciones de Andalucía 2026 · Junta de Andalucía, Consejería de Sanidad</p>
+        <p>Javier Gázquez García · Enfermero, Almería</p>
+        <p><LegalNotice /></p>
+      </footer>
     </div>
   )
 }

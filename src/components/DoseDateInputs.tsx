@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CaretDown, CaretUp } from '@phosphor-icons/react'
 import type { RequiredVaccine, VaccineId, DoseWithDate } from '../types'
 import { VACCINES } from '../data/vaccines'
 
@@ -26,7 +27,9 @@ export function DoseDateInputs({ requirements, doseDates, onChange }: Props) {
             Introduce fechas para detectar dosis inválidas por intervalo insuficiente
           </p>
         </div>
-        <span className="text-gray-400 ml-4">{isOpen ? '▲' : '▼'}</span>
+        <span className="text-gray-400 ml-4">
+          {isOpen ? <CaretUp size={16} /> : <CaretDown size={16} />}
+        </span>
       </button>
 
       {isOpen && (

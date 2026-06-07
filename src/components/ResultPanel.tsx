@@ -1,3 +1,4 @@
+import { CheckCircle, Warning, CaretDown } from '@phosphor-icons/react'
 import type { VaccinationResult } from '../types'
 import { VisitCard } from './VisitCard'
 import { DirayaNote } from './DirayaNote'
@@ -32,20 +33,23 @@ export function ResultPanel({ result, onReset: _onReset }: Props) {
       }`}>
         {isUpToDate ? (
           <div className="flex items-center gap-3">
-            <div className="text-4xl">✓</div>
+            <CheckCircle size={40} weight="fill" className="text-white flex-shrink-0" />
             <div>
               <p className="text-xl font-bold">Calendario al día</p>
               <p className="text-emerald-100 text-sm">{ageLabel} · Sin dosis pendientes</p>
             </div>
           </div>
         ) : (
-          <div>
-            <p className="text-amber-700 font-bold text-lg">
-              ⚠ {missing.length} vacuna{missing.length > 1 ? 's' : ''} pendiente{missing.length > 1 ? 's' : ''}
-            </p>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {ageLabel} · {complete.length} al día · {missing.length} por completar
-            </p>
+          <div className="flex items-start gap-3">
+            <Warning size={28} weight="fill" className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-700 font-bold text-lg">
+                {missing.length} vacuna{missing.length > 1 ? 's' : ''} pendiente{missing.length > 1 ? 's' : ''}
+              </p>
+              <p className="text-gray-500 text-sm mt-0.5">
+                {ageLabel} · {complete.length} al día · {missing.length} por completar
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -69,8 +73,9 @@ export function ResultPanel({ result, onReset: _onReset }: Props) {
             })}
           </div>
           {todayVisit.hasLiveVaccines && (
-            <p className="text-blue-200 text-xs mt-3 bg-white/10 rounded-lg px-3 py-2">
-              ⚠ Vacunas atenuadas presentes — administrar el mismo día o separar ≥28 días
+            <p className="text-blue-100 text-xs mt-3 bg-white/10 rounded-lg px-3 py-2 flex items-start gap-1.5">
+              <Warning size={14} weight="fill" className="flex-shrink-0 mt-0.5" />
+              Vacunas atenuadas presentes: administrar el mismo día o separar 28 días o más
             </p>
           )}
         </div>
@@ -92,7 +97,10 @@ export function ResultPanel({ result, onReset: _onReset }: Props) {
       <details className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <summary className="px-5 py-4 font-semibold text-gray-700 text-sm cursor-pointer hover:bg-gray-50 list-none flex justify-between items-center">
           Estado vacunal completo
-          <span className="text-gray-400 text-xs">{complete.length}/{applicable.length} al día ▼</span>
+          <span className="text-gray-400 text-xs flex items-center gap-1.5">
+            {complete.length}/{applicable.length} al día
+            <CaretDown size={12} />
+          </span>
         </summary>
         <div className="px-5 pb-4 pt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {applicable.map(s => {
@@ -107,11 +115,15 @@ export function ResultPanel({ result, onReset: _onReset }: Props) {
                   <span className={`w-2 h-2 rounded-full ${vaccine.color}`} />
                   <span className="font-bold">{vaccine.shortName}</span>
                 </div>
-                <div>
-                  {s.status === 'complete' ? '✓ Completo' : `${s.valid}/${s.required} dosis`}
+                <div className="flex items-center gap-1">
+                  {s.status === 'complete' && <CheckCircle size={12} weight="fill" />}
+                  {s.status === 'complete' ? 'Completo' : `${s.valid}/${s.required} dosis`}
                 </div>
                 {s.doseValidity?.some(d => !d.isValid) && (
-                  <div className="text-red-600 font-semibold mt-0.5">⚠ dosis inválida</div>
+                  <div className="text-red-600 font-semibold mt-0.5 flex items-center gap-1">
+                    <Warning size={12} weight="fill" />
+                    dosis inválida
+                  </div>
                 )}
               </div>
             )
@@ -121,10 +133,6 @@ export function ResultPanel({ result, onReset: _onReset }: Props) {
 
       {/* ─── Nota Diraya ─── */}
       <DirayaNote todayVisit={todayVisit} />
-
-      <p className="text-center text-xs text-gray-400">
-        Guía Calendarios Acelerados · Junta de Andalucía 2026
-      </p>
     </div>
   )
 }

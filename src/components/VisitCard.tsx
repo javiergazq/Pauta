@@ -1,3 +1,4 @@
+import { Warning } from '@phosphor-icons/react'
 import type { VisitPlan } from '../types'
 import { VACCINES } from '../data/vaccines'
 import { format } from 'date-fns'
@@ -42,8 +43,9 @@ export function VisitCard({ visit, isToday }: Props) {
       </div>
 
       {visit.hasLiveVaccines && (
-        <p className="text-xs text-amber-600 px-4 pb-3">
-          ⚠ Vacunas atenuadas — administrar el mismo día o separar ≥28 días
+        <p className="text-xs text-amber-600 px-4 pb-3 flex items-start gap-1.5">
+          <Warning size={14} weight="fill" className="flex-shrink-0 mt-0.5" />
+          Vacunas atenuadas: administrar el mismo día o separar 28 días o más
         </p>
       )}
     </div>

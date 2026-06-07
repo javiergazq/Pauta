@@ -62,10 +62,10 @@ export const VACCINES: VaccineDef[] = [
   },
   {
     id: 'mmr',
-    name: 'Triple vírica — sarampión, rubeola, parotiditis (M-M-RvaxPro®)',
+    name: 'Triple vírica: sarampión, rubeola y parotiditis (M-M-RvaxPro®)',
     shortName: 'TV',
     type: 'live',
-    color: 'bg-red-400',
+    color: 'bg-rose-500',
     maxDoses: 2,
   },
   {
@@ -89,7 +89,7 @@ export const VACCINES: VaccineDef[] = [
     name: 'Tétanos-Difteria / Tdpa baja carga (Boostrix® / Tetraxim®)',
     shortName: 'Td/Tdpa',
     type: 'inactivated',
-    color: 'bg-red-700',
+    color: 'bg-stone-600',
     maxDoses: 5,  // 3 primovacunación + 2 recuerdos
   },
   {

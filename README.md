@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# Pauta
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Herramienta de consulta rápida del calendario vacunal infantil, pensada para
+agilizar la revisión en consulta de enfermería. Dado un paciente y las dosis
+ya recibidas, calcula qué vacunas tocan hoy, cuáles faltan y cuándo corresponde
+la siguiente cita — siguiendo la Guía de Calendarios Acelerados ANDAVAC 2026
+(Andalucía).
 
-Currently, two official plugins are available:
+La lógica es completamente determinista (sin IA): un motor de reglas evalúa
+los requisitos por edad, las dosis administradas, los intervalos mínimos entre
+dosis y las condiciones clínicas especiales del paciente.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Toda la información se procesa en el navegador. Ningún dato del paciente se
+almacena ni se envía a ningún servidor.
 
-## React Compiler
+## Funcionamiento
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+La app guía al profesional en tres pasos:
 
-## Expanding the ESLint configuration
+1. **Paciente** — fecha de nacimiento, sexo y condiciones clínicas especiales
+   (inmunosupresión, asplenia, prematuridad, etc.), que ajustan las
+   recomendaciones según la guía.
+2. **Vacunas** — registro de las dosis ya recibidas de cada vacuna del
+   calendario.
+3. **Resultado** — qué administrar hoy, próximas citas con fechas mínimas,
+   avisos de vacunas atenuadas y un resumen del estado vacunal completo, listo
+   para copiar como nota de evolución.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Stack técnico
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+React 19 + TypeScript + Vite + Tailwind CSS v4, con Vitest para el motor de
+reglas (74 tests).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Desarrollo local
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # servidor de desarrollo
+npm test         # tests del motor de reglas
+npm run build    # build de producción
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Aviso
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Es una herramienta de apoyo a la consulta. No sustituye el criterio clínico
+del profesional sanitario ni constituye un registro oficial de vacunación, y
+no está conectada a Diraya ni a ningún sistema de la Junta de Andalucía. Antes
+de administrar cualquier vacuna, verifica siempre las pautas con las fuentes
+oficiales.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+Javier Gázquez García · Enfermero, Almería
