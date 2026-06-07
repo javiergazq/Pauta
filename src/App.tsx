@@ -94,9 +94,19 @@ export default function App() {
   const requirements = patient ? getRequirements(patient) : []
   const ageData = patient ? calculateAge(patient.birthDate, patient.evaluationDate) : null
 
+  // Etiqueta corta para el chip del paso 2 (cabe en círculo pequeño)
+  const ageChip = ageData
+    ? ageData.years > 0
+      ? `${ageData.years}a${ageData.months % 12 > 0 ? `${ageData.months % 12}m` : ''}`
+      : ageData.months > 0
+      ? `${ageData.months}m`
+      : `${ageData.weeks}sem`
+    : ''
+
+  // Etiqueta larga para descripción
   const ageLabel = ageData
     ? ageData.years > 0
-      ? `${ageData.years}a${ageData.months % 12 > 0 ? ` ${ageData.months % 12}m` : ''}`
+      ? `${ageData.years} año${ageData.years > 1 ? 's' : ''}${ageData.months % 12 > 0 ? ` ${ageData.months % 12} m` : ''}`
       : ageData.months > 0
       ? `${ageData.months} meses`
       : `${ageData.weeks} semanas`
@@ -143,12 +153,12 @@ export default function App() {
           <>
             {/* Chip de paciente */}
             <div className="bg-white rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
-                {ageLabel}
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold flex-shrink-0 text-xs leading-tight text-center">
+                {ageChip}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800">Marca las dosis recibidas</p>
-                <p className="text-xs text-gray-400">Pulsa el número de dosis que ya tiene puestas</p>
+                <p className="text-sm font-semibold text-gray-800">Paciente de {ageLabel}</p>
+                <p className="text-xs text-gray-400">Indica el número de dosis recibidas de cada vacuna</p>
               </div>
             </div>
 
