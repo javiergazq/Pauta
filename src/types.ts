@@ -54,9 +54,10 @@ export interface PatientData {
 export interface VaccineDef {
   id: VaccineId
   name: string       // nombre completo
-  shortName: string  // abreviatura para chips y grid
+  shortName: string  // abreviatura para chips del plan de visitas
   type: VaccineType  // live | inactivated — controla la regla de 28 días
   color: string      // clase Tailwind bg-* para el chip de color
+  maxDoses: number   // máximo de dosis que un paciente podría haber recibido históricamente
 }
 
 // intervals[0] = días mínimos entre dosis 1→2

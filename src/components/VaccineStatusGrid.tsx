@@ -50,9 +50,9 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
                 </span>
               </div>
 
-              {/* Selector de dosis: botones 0, 1, 2, ..., minDoses */}
+              {/* Selector: 0 hasta el máximo histórico posible (no solo el mínimo requerido) */}
               <div className="flex gap-1">
-                {Array.from({ length: req.minDoses + 1 }, (_, i) => (
+                {Array.from({ length: Math.max(req.minDoses, vaccine.maxDoses) + 1 }, (_, i) => (
                   <button
                     key={i}
                     type="button"

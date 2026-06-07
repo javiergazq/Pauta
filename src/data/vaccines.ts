@@ -10,6 +10,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'DTPa',
     type: 'inactivated',
     color: 'bg-red-500',
+    maxDoses: 4,  // 3 primovacunación + refuerzo 6 años
   },
   {
     id: 'hepb',
@@ -17,6 +18,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'HepB',
     type: 'inactivated',
     color: 'bg-orange-500',
+    maxDoses: 3,
   },
   {
     id: 'polio',
@@ -24,6 +26,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'Polio',
     type: 'inactivated',
     color: 'bg-yellow-600',
+    maxDoses: 4,  // 3 primovacunación + refuerzo 6 años
   },
   {
     id: 'hib',
@@ -31,6 +34,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'HiB',
     type: 'inactivated',
     color: 'bg-lime-600',
+    maxDoses: 3,  // primovacunación completa 3 dosis — aunque el mínimo varíe por edad
   },
   {
     id: 'pneumo',
@@ -38,6 +42,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'VNC20',
     type: 'inactivated',
     color: 'bg-blue-600',
+    maxDoses: 4,  // pauta 3+1 completa
   },
   {
     id: 'menb',
@@ -45,6 +50,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'MenB',
     type: 'inactivated',
     color: 'bg-purple-600',
+    maxDoses: 3,
   },
   {
     id: 'menacwy',
@@ -52,27 +58,31 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'MenACWY',
     type: 'inactivated',
     color: 'bg-pink-600',
+    maxDoses: 2,
   },
   {
     id: 'mmr',
     name: 'Triple vírica — sarampión, rubeola, parotiditis (M-M-RvaxPro®)',
     shortName: 'TV',
-    type: 'live', // atenuada — regla 28 días si no se da el mismo día que otra atenuada
+    type: 'live',
     color: 'bg-red-400',
+    maxDoses: 2,
   },
   {
     id: 'varicella',
     name: 'Varicela (Varivax®)',
     shortName: 'VVZ',
-    type: 'live', // atenuada — regla 28 días si no se da el mismo día que otra atenuada
+    type: 'live',
     color: 'bg-indigo-400',
+    maxDoses: 2,
   },
   {
     id: 'rotavirus',
     name: 'Rotavirus oral (Rotarix®)',
     shortName: 'RV',
-    type: 'live', // atenuada oral — límite estricto por semanas de vida
+    type: 'live',
     color: 'bg-amber-500',
+    maxDoses: 2,
   },
   {
     id: 'tdtdpa',
@@ -80,6 +90,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'Td/Tdpa',
     type: 'inactivated',
     color: 'bg-red-700',
+    maxDoses: 5,  // 3 primovacunación + 2 recuerdos
   },
   {
     id: 'hpv',
@@ -87,6 +98,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'VPH',
     type: 'inactivated',
     color: 'bg-fuchsia-500',
+    maxDoses: 3,  // pauta 3 dosis en inmunosuprimidos
   },
 ]
 
@@ -108,7 +120,7 @@ export const VACCINE_INTERVALS: VaccineIntervals[] = [
   { vaccineId: 'rotavirus', intervals: [28] },              // 4sem (atenuada oral)
   // ── A partir de 7 años (Tabla 2) ────────────────────────────────────────
   { vaccineId: 'tdtdpa',    intervals: [28, 180, 365, 365] }, // 4sem | 6m | 1año | 1año
-  { vaccineId: 'hpv',       intervals: [60, 120] },            // 2m | 4m (pauta 3 dosis inmunosuprimidos)
+  { vaccineId: 'hpv',       intervals: [60, 120] },            // 2m | 4m (pauta 3 dosis)
 ]
 
 export function getVaccineDef(id: VaccineId): VaccineDef {

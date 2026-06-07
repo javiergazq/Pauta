@@ -1,5 +1,6 @@
 import type { VaccinationResult } from '../types'
 import { VisitCard } from './VisitCard'
+import { DirayaNote } from './DirayaNote'
 import { VACCINES } from '../data/vaccines'
 
 interface Props {
@@ -12,6 +13,7 @@ export function ResultPanel({ result, onReset }: Props) {
   const applicable = vaccineStatuses.filter(s => s.status !== 'not_applicable')
   const missing = applicable.filter(s => s.status !== 'complete')
   const nonEmptyVisits = catchupPlan.filter(p => p.vaccines.length > 0)
+  const todayVisit = catchupPlan.find(p => p.label === 'HOY')
 
   const ageLabel = ageData.years > 0
     ? `${ageData.years} año${ageData.years > 1 ? 's' : ''}${ageData.months % 12 > 0 ? ` ${ageData.months % 12} m` : ''}`
@@ -83,11 +85,14 @@ export function ResultPanel({ result, onReset }: Props) {
               <VisitCard key={visit.label} visit={visit} isToday={i === 0} />
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4 text-center">
-            Fuente: Guía Calendarios Acelerados ANDAVAC 2026 (feb. 2026)
+          <p className="text-xs text-gray-400 mt-3 text-center">
+            Guía Calendarios Acelerados · Junta de Andalucía 2026
           </p>
         </div>
       )}
+
+      {/* Nota para Diraya — siempre visible */}
+      <DirayaNote todayVisit={todayVisit} />
     </div>
   )
 }
