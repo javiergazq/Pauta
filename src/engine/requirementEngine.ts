@@ -43,8 +43,9 @@ function buildUnder7(
   // Si ya tiene ≥24 semanas no puede completar la pauta → no aplicable
   const rotaApplicable = ageWeeks < 24
 
-  // DTPa: siempre 3 dosis en <7 años (la 4ª es el refuerzo de los 6 años, en Polio)
-  const dtpaDoses = 3
+  // DTPa: pauta 2+1 → 3 dosis en <24 meses; refuerzo DTPa-VPI a los 6 años → 4 dosis en ≥24 meses
+  // (alineado con Polio: ambas llevan el mismo refuerzo de los 6 años con Tetraxim)
+  const dtpaDoses = months < 24 ? 3 : 4
 
   // Polio: pauta 2+1 → 3 dosis; refuerzo DTPa-VPI a los 6 años → 4 dosis totales
   const polioDoses = months < 24 ? 3 : 4
