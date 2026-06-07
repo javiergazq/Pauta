@@ -17,7 +17,7 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
         Toca el número de dosis recibidas de cada vacuna.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {applicable.map(req => {
           const vaccine = VACCINES.find(v => v.id === req.vaccineId)!
           const count = doseCounts.find(d => d.vaccineId === req.vaccineId)?.count ?? 0
@@ -30,24 +30,27 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
             ? 'border-red-300 bg-red-50'
             : 'border-yellow-400 bg-yellow-50'
 
-          const statusLabel = isComplete
-            ? <span className="text-green-700 font-semibold text-xs">✓ Al día</span>
-            : <span className="text-gray-500 text-xs">{count}/{req.minDoses} dosis</span>
-
           return (
             <div key={req.vaccineId} className={`border-2 rounded-xl p-3 transition-all ${borderColor}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <span className={`w-3 h-3 rounded-full flex-shrink-0 ${vaccine.color}`} />
-                  <span className="font-semibold text-sm text-gray-800">{vaccine.shortName}</span>
+                  <span className="font-semibold text-sm text-gray-800 leading-tight">
+                    {vaccine.name}
+                  </span>
                   {vaccine.type === 'live' && (
-                    <span className="text-xs bg-purple-100 text-purple-700 rounded px-1">atenuada</span>
+                    <span className="text-xs bg-purple-100 text-purple-700 rounded px-1 flex-shrink-0">atenuada</span>
                   )}
                 </div>
-                {statusLabel}
+                <span className="flex-shrink-0 text-xs font-medium whitespace-nowrap">
+                  {isComplete
+                    ? <span className="text-green-700 font-semibold">✓ Al día</span>
+                    : <span className="text-gray-500">{count}/{req.minDoses} dosis</span>
+                  }
+                </span>
               </div>
 
-              {/* Selector de dosis: 0, 1, 2, ..., minDoses */}
+              {/* Selector de dosis: botones 0, 1, 2, ..., minDoses */}
               <div className="flex gap-1">
                 {Array.from({ length: req.minDoses + 1 }, (_, i) => (
                   <button

@@ -12,10 +12,21 @@ export function getRequirements(patient: PatientData): RequiredVaccine[] {
   const { birthDate, evaluationDate, conditions } = patient
   const age = calculateAge(birthDate, evaluationDate)
   const ageWeeks = differenceInWeeks(evaluationDate, birthDate)
+
+  // Interpretación de condiciones clínicas → grupos de riesgo
   const isImmunosuppressed = conditions.includes('immunosuppression')
+    || conditions.includes('hiv')
+  const isHighRiskPneumo = conditions.includes('asplenia')
+    || conditions.includes('chronic_disease')
+    || conditions.includes('cochlear_implant')
+    || conditions.includes('immunosuppression')
+    || conditions.includes('hiv')
+  const isHighRiskMeningo = conditions.includes('asplenia')
+    || conditions.includes('immunosuppression')
+    || conditions.includes('hiv')
 
   if (age.group === 'under7') {
-    return buildUnder7(age.months, ageWeeks, birthDate, conditions)
+    return buildUnder7(age.months, ageWeeks, birthDate, { isHighRiskPneumo, isHighRiskMeningo })
   }
   return build7to18(age.months, isImmunosuppressed)
 }
@@ -28,13 +39,19 @@ function off(vaccineId: VaccineId): RequiredVaccine {
   return { vaccineId, minDoses: 0, applicable: false }
 }
 
+interface RiskFlags {
+  isHighRiskPneumo: boolean
+  isHighRiskMeningo: boolean
+}
+
 // ── Menores de 7 años (Tabla 1 ANDAVAC 2026) ─────────────────────────────────
 function buildUnder7(
   months: number,
   ageWeeks: number,
   birthDate: Date,
-  _conditions: string[]  // v2: usar para grupos de riesgo (neumococo, meningococo)
+  risk: RiskFlags
 ): RequiredVaccine[] {
+  const { isHighRiskPneumo, isHighRiskMeningo } = risk
 
   // MenB: solo para nacidos a partir del 1/10/2021 y menores de 7 años
   const menBApplicable = birthDate >= MEN_B_CUTOFF && months < 72
@@ -65,14 +82,14 @@ function buildUnder7(
   if (months >= 7 && months < 12) pneumoDoses = 3
   else if (months >= 12 && months < 24) pneumoDoses = 2
   else if (months >= 24 && months < 60) pneumoDoses = 1
-  else if (months >= 60) pneumoDoses = 0  // ≥5 años: solo grupos de riesgo
+  else if (months >= 60) pneumoDoses = isHighRiskPneumo ? 1 : 0  // ≥5 años: solo riesgo
 
   // MenB: dosis según edad de inicio
   let menBDoses = 3        // <24 meses
   if (months >= 24) menBDoses = 2  // 24-71 meses: 2 dosis separadas ≥1 mes
 
-  // MenACWY: 1 dosis a partir de los 4 meses
-  const menacwyApplicable = months >= 4
+  // MenACWY: 1 dosis a partir de los 4 meses; grupos de riesgo en cualquier edad
+  const menacwyApplicable = months >= 4 || isHighRiskMeningo
 
   // TV: 1 dosis <24 meses, 2 dosis ≥24 meses
   const mmrDoses = months < 24 ? 1 : 2

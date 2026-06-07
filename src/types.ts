@@ -23,11 +23,15 @@ export type Sex = 'M' | 'F'
 export type AgeGroup = 'under7' | '7to18'
 // over18, embarazadas, grupos_riesgo → v2/v3
 
+// Condiciones clínicas del paciente — el motor las interpreta para determinar grupos de riesgo
+// Se muestran al profesional como patologías concretas, no como "grupos de riesgo"
 export type ConditionType =
-  | 'immunosuppression' // cambia pauta VPH a 3 dosis; excluye TV y VVZ
-  | 'risk_pneumo'       // amplía indicación VNC20
-  | 'risk_meningo'      // amplía indicación MenB y MenACWY
-  | 'risk_hpv'          // amplía indicación VPH fuera de rango de edad
+  | 'immunosuppression'  // Inmunosupresión: oncología, trasplante, VIH avanzado, corticoides altas dosis
+  | 'asplenia'           // Asplenia anatómica o funcional, anemia drepanocítica
+  | 'chronic_disease'    // Cardiopatía, neumopatía crónica, hepatopatía, nefropatía, diabetes
+  | 'cochlear_implant'   // Implante coclear o fístula de LCR
+  | 'premature_lt35'     // Prematuro < 35 semanas de gestación
+  | 'hiv'                // VIH (independientemente del estadio)
 
 // ─── Edad calculada ───────────────────────────────────────────────────────────
 export interface AgeData {

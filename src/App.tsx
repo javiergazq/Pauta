@@ -68,15 +68,21 @@ export default function App() {
     <div className="min-h-screen bg-gray-100">
       <header className="bg-blue-700 text-white py-4 px-4 shadow-lg">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-xl font-bold tracking-tight">VacunaCheck Andalucía</h1>
-          <p className="text-blue-200 text-sm">Calendarios acelerados · ANDAVAC 2026</p>
+          <h1 className="text-xl font-bold tracking-tight">PautaVac</h1>
+          <p className="text-blue-200 text-sm">Calculadora de calendarios vacunales · Andalucía</p>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
 
         {step === 'patient' && (
-          <PatientForm onSubmit={handlePatientSubmit} />
+          <>
+            <PatientForm onSubmit={handlePatientSubmit} />
+            <p className="text-center text-xs text-gray-400 pb-2">
+              Recomendaciones basadas en el Calendario de Vacunaciones e Inmunizaciones de Andalucía 2026
+              · Junta de Andalucía, Consejería de Sanidad
+            </p>
+          </>
         )}
 
         {step === 'status' && patient && ageData && (
