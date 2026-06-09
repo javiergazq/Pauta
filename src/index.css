@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+:root {
+  --pauta-navy: #063f73;
+  --pauta-navy-dark: #032f58;
+  --pauta-aqua: #0ea7b5;
+  --pauta-aqua-soft: #e6f7f9;
+  --pauta-surface: #f5f8fb;
+  --pauta-border: #d8e2ea;
+  font-family: Aptos, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #172033;
+  background: var(--pauta-surface);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgba(14, 167, 181, 0.10), transparent 30rem),
+    linear-gradient(180deg, #f8fafc 0%, var(--pauta-surface) 48%, #edf3f7 100%);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(14, 167, 181, 0.28);
+  outline-offset: 2px;
+}
+
+* {
+  box-sizing: border-box;
+}

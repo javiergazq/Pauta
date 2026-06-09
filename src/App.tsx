@@ -21,24 +21,23 @@ const STEP_MAP: Record<Step, number> = { patient: 0, status: 1, result: 2 }
 function StepBar({ step }: { step: Step }) {
   const current = STEP_MAP[step]
   return (
-    <div className="flex items-center gap-0 mb-1">
+    <div className="flex items-center gap-1 sm:gap-2">
       {STEP_LABELS.map((label, i) => (
-        <div key={label} className="flex items-center flex-1 last:flex-none">
-          <div className="flex flex-col items-center">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-              i < current ? 'bg-blue-600 text-white' :
-              i === current ? 'bg-white text-blue-700 ring-2 ring-blue-600' :
-              'bg-blue-800 text-blue-400'
+        <div key={label} className="flex min-w-0 flex-1 items-center">
+          <div className={`flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-1.5 py-2 transition-colors sm:justify-start sm:px-2.5 ${
+            i < current ? 'bg-[var(--pauta-aqua-soft)] text-[var(--pauta-navy)]' :
+            i === current ? 'bg-[var(--pauta-navy)] text-white shadow-sm' :
+            'bg-slate-100 text-slate-500'
+          }`}>
+            <div className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold ${
+              i < current ? 'bg-[var(--pauta-aqua)] text-white' :
+              i === current ? 'bg-white text-[var(--pauta-navy)]' :
+              'bg-white text-slate-400'
             }`}>
               {i < current ? <Check size={14} weight="bold" /> : i + 1}
             </div>
-            <span className={`text-xs mt-1 font-medium ${i === current ? 'text-white' : 'text-blue-300'}`}>
-              {label}
-            </span>
+            <span className="hidden truncate text-xs font-semibold sm:inline">{label}</span>
           </div>
-          {i < STEP_LABELS.length - 1 && (
-            <div className={`flex-1 h-0.5 mx-1 mb-4 ${i < current ? 'bg-blue-400' : 'bg-blue-800'}`} />
-          )}
         </div>
       ))}
     </div>
@@ -96,7 +95,6 @@ export default function App() {
   const requirements = patient ? getRequirements(patient) : []
   const ageData = patient ? calculateAge(patient.birthDate, patient.evaluationDate) : null
 
-  // Etiqueta corta para el chip del paso 2 (cabe en círculo pequeño)
   const ageChip = ageData
     ? ageData.years > 0
       ? `${ageData.years}a${ageData.months % 12 > 0 ? `${ageData.months % 12}m` : ''}`
@@ -105,7 +103,6 @@ export default function App() {
       : `${ageData.weeks}sem`
     : ''
 
-  // Etiqueta larga para descripción
   const ageLabel = ageData
     ? ageData.years > 0
       ? `${ageData.years} año${ageData.years > 1 ? 's' : ''}${ageData.months % 12 > 0 ? ` ${ageData.months % 12} m` : ''}`
@@ -115,21 +112,25 @@ export default function App() {
     : ''
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      {/* Header con identidad y barra de progreso */}
-      <header className="bg-blue-700 text-white px-4 pt-4 pb-5 shadow-lg sticky top-0 z-20">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-lg font-extrabold tracking-tight leading-none">Pauta</h1>
-              <p className="text-blue-300 text-xs mt-0.5">Calendarios vacunales · Andalucía 2026</p>
+    <div className="min-h-screen text-slate-900">
+      <header className="sticky top-0 z-20 border-b border-[var(--pauta-border)] bg-white/92 px-3 py-3 shadow-sm backdrop-blur sm:px-4">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <img
+                src="/pauta-logo.png"
+                alt="Pauta"
+                className="h-9 w-auto max-w-[150px] object-contain sm:h-10 sm:max-w-[190px]"
+              />
+              <p className="mt-1 truncate text-xs font-medium text-slate-500">Calendarios vacunales · Andalucía 2026</p>
             </div>
             {step !== 'patient' && (
               <button
                 onClick={handleReset}
-                className="text-xs text-blue-300 border border-blue-500 rounded-lg px-3 py-1.5 hover:bg-blue-600 transition-colors"
+                className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
               >
-                Nueva consulta
+                <span className="sm:hidden">Nueva</span>
+                <span className="hidden sm:inline">Nueva consulta</span>
               </button>
             )}
           </div>
@@ -137,22 +138,37 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+      <main className={`mx-auto px-3 py-4 sm:px-4 sm:py-8 ${step === 'patient' ? 'max-w-4xl' : 'max-w-3xl'}`}>
+        {step === 'patient' && (
+          <div className="space-y-4">
+            <section className="rounded-2xl border border-slate-200 bg-white/85 px-3 py-3 shadow-sm sm:px-5 sm:py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-base font-black tracking-tight text-[var(--pauta-navy)] sm:text-lg">Nueva valoración vacunal</h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600">
+                    Datos mínimos del paciente y revisión de condiciones especiales solo cuando proceda.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-center text-[11px] font-bold text-slate-600 sm:min-w-72">
+                  <span className="rounded-lg bg-white px-2 py-1.5 text-slate-900 shadow-sm">Paciente</span>
+                  <span className="px-2 py-1.5">Dosis</span>
+                  <span className="px-2 py-1.5">Resultado</span>
+                </div>
+              </div>
+            </section>
+            <PatientForm onSubmit={handlePatientSubmit} />
+          </div>
+        )}
 
-        {/* ─── Paso 1: Datos del paciente ─── */}
-        {step === 'patient' && <PatientForm onSubmit={handlePatientSubmit} />}
-
-        {/* ─── Paso 2: Estado vacunal ─── */}
         {step === 'status' && patient && ageData && (
-          <>
-            {/* Chip de paciente */}
-            <div className="bg-white rounded-xl px-4 py-3 shadow-sm flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold flex-shrink-0 text-xs leading-tight text-center">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/90 px-3 py-3 shadow-sm ring-1 ring-slate-200/70 sm:px-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--pauta-aqua-soft)] text-center text-xs font-black leading-tight text-[var(--pauta-navy)]">
                 {ageChip}
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">Paciente de {ageLabel}</p>
-                <p className="text-xs text-gray-400">Indica el número de dosis recibidas de cada vacuna</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900">Paciente de {ageLabel}</p>
+                <p className="text-xs text-slate-500">Indica el número de dosis recibidas de cada vacuna</p>
               </div>
             </div>
 
@@ -168,28 +184,25 @@ export default function App() {
               onChange={handleDoseDateChange}
             />
 
-            {/* CTA principal — grande y claro */}
-            <div className="sticky bottom-4 z-10">
+            <div className="sticky bottom-3 z-10 sm:bottom-4">
               <button
                 type="button"
                 onClick={handleCalculate}
-                className="w-full bg-blue-600 text-white rounded-2xl py-4 font-bold text-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xl flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--pauta-navy)] px-3 py-4 text-base font-black text-white shadow-[0_18px_45px_rgba(3,47,88,0.24)] transition hover:bg-[var(--pauta-navy-dark)] active:scale-[0.99] sm:text-lg"
               >
                 Ver qué vacunas poner hoy
                 <ArrowRight size={20} weight="bold" />
               </button>
             </div>
-          </>
+          </div>
         )}
 
-        {/* ─── Paso 3: Resultado ─── */}
         {step === 'result' && result && (
           <ResultPanel result={result} onReset={handleReset} />
         )}
-
       </main>
 
-      <footer className="text-center text-xs text-gray-400 px-4 pb-6 space-y-1">
+      <footer className="mx-auto max-w-4xl px-4 pb-8 pt-2 text-center text-xs leading-5 text-slate-500">
         <p>Basado en el Calendario de Vacunaciones e Inmunizaciones de Andalucía 2026 · Junta de Andalucía, Consejería de Sanidad</p>
         <p>Javier Gázquez García · Enfermero, Almería</p>
         <p><LegalNotice /></p>

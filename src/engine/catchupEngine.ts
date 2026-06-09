@@ -3,7 +3,7 @@
 import { addDays } from 'date-fns'
 import type { AgeGroup, VaccineId, VaccineStatus, VisitPlan, VisitVaccine } from '../types'
 import { CATCHUP_SCHEDULES } from '../data/catchupSchedules'
-import { getVaccineDef } from '../data/vaccines'
+import { getVaccineDef, requiresLiveSpacing } from '../data/vaccines'
 
 export function generateCatchupPlan(
   statuses: VaccineStatus[],
@@ -44,12 +44,14 @@ export function generateCatchupPlan(
         doseNumber: nextDoseNumber,
         minDate: addDays(evaluationDate, visitTemplate.offsetDays),
         isLive: vaccine.type === 'live',
+        source: 'catchup',
       })
     }
 
-    // Aviso de co-administración: hay vacunas atenuadas en esta visita
-    const liveCount = visitVaccines.filter(v => v.isLive).length
-    const hasLiveVaccines = liveCount > 0
+    // Aviso de co-administración (separar 28 días): solo atenuadas inyectables (TV, varicela).
+    // Rotavirus es atenuada oral y no está sujeta a esta regla — isLive marca el badge "atenuada",
+    // pero el aviso de espaciado usa requiresLiveSpacing.
+    const hasLiveVaccines = visitVaccines.some(v => requiresLiveSpacing(v.vaccineId))
 
     return {
       label: visitTemplate.label,

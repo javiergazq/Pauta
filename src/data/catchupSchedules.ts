@@ -38,6 +38,7 @@ export const CATCHUP_SCHEDULES: Record<AgeGroup, CatchupVisitTemplate[]> = {
       vaccines: [
         'rotavirus',  // 2ª dosis RV (si <24 semanas de vida)
         'mmr',        // 2ª dosis TV
+        'menb',       // 2ª dosis MenB en rescate ≥24 meses (pauta 2 dosis separadas ≥1 mes)
       ],
     },
     {
@@ -46,6 +47,7 @@ export const CATCHUP_SCHEDULES: Record<AgeGroup, CatchupVisitTemplate[]> = {
       vaccines: [
         'dtpa', 'hepb', 'polio', 'hib',  // Hexavalente 2ª
         'varicella',                       // VVZ 2ª (atenuada — sin TV en esta visita, ok)
+        'menb',                            // 3ª dosis MenB en rescate <24 meses (pauta 3 dosis)
       ],
     },
     {

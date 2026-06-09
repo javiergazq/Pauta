@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { getRequirements } from '../../src/engine/requirementEngine'
-import { PatientData } from '../../src/types'
+import { getRequirements, evaluateRotavirusGuidance } from '../../src/engine/requirementEngine'
+import type { ConditionType, PatientData } from '../../src/types'
 
 function makePatient(
   birthDate: string,
   evalDate: string,
   sex: 'M' | 'F' = 'M',
-  conditions: any[] = []
+  conditions: ConditionType[] = []
 ): PatientData {
   return { birthDate: new Date(birthDate), sex, evaluationDate: new Date(evalDate), conditions }
 }
@@ -141,5 +141,46 @@ describe('VPH — condiciones', () => {
       makePatient('2013-01-01', '2025-06-01', 'F', ['immunosuppression'])
     )
     expect(get(reqs, 'hpv').minDoses).toBe(3)
+  })
+})
+
+// ── Rotavirus — validación de ventana por edad exacta (no es rescate normal) ─
+describe('evaluateRotavirusGuidance — ventana de inicio/cierre de pauta', () => {
+  const evalDate = new Date('2026-06-01')
+
+  it('0 dosis y <20 semanas → recomendar 1ª dosis con normalidad', () => {
+    expect(evaluateRotavirusGuidance(16, 0, null, evalDate)).toEqual({ recommend: true })
+  })
+
+  it('0 dosis y ≥20 semanas → no recomendar; aviso específico de ventana', () => {
+    const g = evaluateRotavirusGuidance(22, 0, null, evalDate)
+    expect(g.recommend).toBe(false)
+    expect(g.caution).toMatch(/Rotavirus/)
+    expect(g.caution).toMatch(/24 semanas/)
+  })
+
+  it('1 dosis, fecha conocida con ≥4 semanas y <24 semanas → recomendar 2ª dosis', () => {
+    const g = evaluateRotavirusGuidance(20, 1, new Date('2026-05-01'), evalDate) // 4 semanas y 3 días antes
+    expect(g).toEqual({ recommend: true })
+  })
+
+  it('1 dosis sin fecha conocida (modo conteo) → no recomendar; pedir confirmar fecha e intervalo', () => {
+    const g = evaluateRotavirusGuidance(20, 1, null, evalDate)
+    expect(g.recommend).toBe(false)
+    expect(g.caution).toMatch(/fecha exacta/)
+  })
+
+  it('1 dosis con fecha conocida pero intervalo de 4 semanas aún no cumplido → no recomendar', () => {
+    const g = evaluateRotavirusGuidance(20, 1, new Date('2026-05-20'), evalDate) // 12 días antes
+    expect(g.recommend).toBe(false)
+  })
+
+  it('1 dosis con intervalo cumplido pero ya en el límite de 24 semanas → no recomendar', () => {
+    const g = evaluateRotavirusGuidance(24, 1, new Date('2026-05-01'), evalDate)
+    expect(g.recommend).toBe(false)
+  })
+
+  it('2 dosis → pauta completa, recomendar con normalidad (nada que ajustar)', () => {
+    expect(evaluateRotavirusGuidance(20, 2, null, evalDate)).toEqual({ recommend: true })
   })
 })

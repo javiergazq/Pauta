@@ -26,12 +26,32 @@ export type AgeGroup = 'under7' | '7to18'
 // Condiciones clínicas del paciente — el motor las interpreta para determinar grupos de riesgo
 // Se muestran al profesional como patologías concretas, no como "grupos de riesgo"
 export type ConditionType =
+  | 'varicella_history'
+  | 'measles_immunity_or_history'
   | 'immunosuppression'  // Inmunosupresión: oncología, trasplante, VIH avanzado, corticoides altas dosis
+  | 'severe_immunosuppression' // Inmunosupresión grave: precaución crítica con vacunas atenuadas
+  | 'immunosuppressive_treatment'
+  | 'transplant_or_candidate'
   | 'asplenia'           // Asplenia anatómica o funcional, anemia drepanocítica
+  | 'asplenia_hyposplenia'
+  | 'complement_deficiency_or_anti_c5'
+  | 'previous_invasive_meningococcal_disease'
+  | 'invasive_pneumococcal_risk'
   | 'chronic_disease'    // Cardiopatía, neumopatía crónica, hepatopatía, nefropatía, diabetes
+  | 'chronic_heart_disease'
+  | 'chronic_lung_disease'
+  | 'chronic_liver_disease'
+  | 'chronic_kidney_disease'
+  | 'diabetes'
+  | 'neuromuscular_or_respiratory_risk'
   | 'cochlear_implant'   // Implante coclear o fístula de LCR
+  | 'cochlear_implant_or_csf_leak'
   | 'premature_lt35'     // Prematuro < 35 semanas de gestación
   | 'hiv'                // VIH (independientemente del estadio)
+  | 'undocumented_doses' // Dosis referidas sin documentación verificable
+  | 'maternal_hbsag_positive' // Madre HBsAg positiva o situación perinatal de hepatitis B
+  | 'maternal_hbsag_unknown'
+  | 'international_travel'
 
 // ─── Edad calculada ───────────────────────────────────────────────────────────
 export interface AgeData {
@@ -55,7 +75,8 @@ export interface VaccineDef {
   id: VaccineId
   name: string       // nombre completo
   shortName: string  // abreviatura para chips del plan de visitas
-  type: VaccineType  // live | inactivated — controla la regla de 28 días
+  type: VaccineType  // live | inactivated
+  route?: 'oral'     // si es oral (rotavirus): la regla de separación de 28 días entre atenuadas no aplica — es solo para atenuadas inyectables (TV, varicela)
   color: string      // clase Tailwind bg-* para el chip de color
   maxDoses: number   // máximo de dosis que un paciente podría haber recibido históricamente
 }
@@ -116,6 +137,33 @@ export interface VaccineStatus {
   doseValidity?: DoseValidity[] // solo Modo C
 }
 
+// ─── Calendario sistemático (capa previa al rescate) ─────────────────────────
+// Define CUÁNDO toca cada dosis según el calendario normal (no los mínimos de
+// rescate). Se evalúa antes que el motor de rescate: solo si hay un retraso
+// genuino (overdue) se activa generateCatchupPlan.
+export interface SystematicScheduleEvent {
+  vaccineId: VaccineId
+  ageMonths: number // edad sistemática de esta dosis
+  dose: number      // qué número de dosis es dentro de la pauta sistemática
+  // Si está presente: la dosis se considera "toca ahora" durante todo el año en
+  // curso (p.ej. "a los 2 años" = 24-35 meses) y solo "retrasada" al cumplir el
+  // año siguiente. Si no está presente: gracia plana de 30 días tras la edad.
+  graceUnit?: 'year'
+  // Regla de transición 2026 (TV/VVZ 2ª dosis): durante 2026 sustituye la
+  // ventana habitual — "toca ahora" hasta cumplir esta edad (en meses);
+  // "retrasada" a partir de ahí.
+  transition2026?: { dueUntilMonths: number; note: string }
+  note?: string
+}
+
+export interface SystematicVaccineStatus {
+  vaccineId: VaccineId
+  status: 'up_to_date' | 'due_today' | 'overdue' | 'not_applicable'
+  satisfiedDoses: number                     // nº de dosis sistemáticas ya cubiertas por dosis válidas
+  nextEvent: SystematicScheduleEvent | null  // próxima dosis pendiente (due_today / overdue / futura inmediata)
+  futureEvents: SystematicScheduleEvent[]    // dosis sistemáticas aún no alcanzadas por la edad
+}
+
 // ─── Plan de visitas (output principal) ──────────────────────────────────────
 
 // Una vacuna específica dentro de una visita
@@ -124,6 +172,9 @@ export interface VisitVaccine {
   doseNumber: number // qué número de dosis es (1ª, 2ª, 3ª…)
   minDate: Date      // fecha mínima a partir de la cual se puede administrar
   isLive: boolean    // si es atenuada — aviso de co-administración
+  // Origen de la indicación: calendario sistemático normal o motor de rescate.
+  // Permite diferenciarlo en la UI y en la nota Diraya.
+  source?: 'systematic' | 'catchup'
 }
 
 // Una visita del plan (HOY, +1 mes, +2 meses, +8 meses…)
@@ -139,6 +190,29 @@ export interface VaccinationResult {
   patientData: PatientData
   ageData: AgeData
   vaccineStatuses: VaccineStatus[]
-  isUpToDate: boolean
-  catchupPlan: VisitPlan[] // vacío si isUpToDate = true
+  isUpToDate: boolean   // true = al día con el calendario sistemático (no hay retraso real, no hace falta rescate)
+  hasDueToday: boolean  // true = hay alguna dosis sistemática que toca hoy (independiente de isUpToDate)
+  systematicStatuses: SystematicVaccineStatus[]
+  catchupPlan: VisitPlan[] // visita "HOY" puede venir del calendario sistemático o del rescate — ver VisitVaccine.source
+  // Si la ventana de rotavirus está al límite (no se puede asegurar iniciar/completar
+  // la pauta), el motor la excluye del plan y deja aquí el aviso específico para el sanitario.
+  rotavirusCaution: string | null
+  vaccineCautions: VaccineCaution[]
+  conditionCautions: ConditionCaution[]
+  // true cuando el cálculo se basa solo en número de dosis (sin fechas). El sanitario
+  // debe confirmar la fecha de la última dosis antes de administrar.
+  countMode: boolean
+}
+
+export interface VaccineCaution {
+  vaccineId: VaccineId
+  message: string
+}
+
+export interface ConditionCaution {
+  conditionId: ConditionType
+  label: string
+  message: string
+  severity: 'warning' | 'critical'
+  affectedVaccines?: VaccineId[]
 }

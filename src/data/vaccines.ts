@@ -1,6 +1,5 @@
-// Catálogo de vacunas e intervalos mínimos entre dosis
-// Fuente: Guía Calendarios Acelerados ANDAVAC 2026 (feb 2026), Tablas 1 y 2
-// ANDAVAC 2026 — actualizar anualmente
+// Catálogo de vacunas e intervalos mínimos entre dosis.
+// Fuente: Guía Calendarios Acelerados ANDAVAC 2026, tablas 1 y 2.
 import type { VaccineDef, VaccineId, VaccineIntervals } from '../types'
 
 export const VACCINES: VaccineDef[] = [
@@ -10,7 +9,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'DTPa',
     type: 'inactivated',
     color: 'bg-red-500',
-    maxDoses: 4,  // 3 primovacunación + refuerzo 6 años
+    maxDoses: 4,
   },
   {
     id: 'hepb',
@@ -26,7 +25,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'Polio',
     type: 'inactivated',
     color: 'bg-yellow-600',
-    maxDoses: 4,  // 3 primovacunación + refuerzo 6 años
+    maxDoses: 4,
   },
   {
     id: 'hib',
@@ -34,7 +33,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'HiB',
     type: 'inactivated',
     color: 'bg-lime-600',
-    maxDoses: 3,  // primovacunación completa 3 dosis — aunque el mínimo varíe por edad
+    maxDoses: 3,
   },
   {
     id: 'pneumo',
@@ -42,7 +41,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'VNC20',
     type: 'inactivated',
     color: 'bg-blue-600',
-    maxDoses: 4,  // pauta 3+1 completa
+    maxDoses: 4,
   },
   {
     id: 'menb',
@@ -81,6 +80,7 @@ export const VACCINES: VaccineDef[] = [
     name: 'Rotavirus oral (Rotarix®)',
     shortName: 'RV',
     type: 'live',
+    route: 'oral',
     color: 'bg-amber-500',
     maxDoses: 2,
   },
@@ -90,7 +90,7 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'Td/Tdpa',
     type: 'inactivated',
     color: 'bg-stone-600',
-    maxDoses: 5,  // 3 primovacunación + 2 recuerdos
+    maxDoses: 5,
   },
   {
     id: 'hpv',
@@ -98,29 +98,23 @@ export const VACCINES: VaccineDef[] = [
     shortName: 'VPH',
     type: 'inactivated',
     color: 'bg-fuchsia-500',
-    maxDoses: 3,  // pauta 3 dosis en inmunosuprimidos
+    maxDoses: 3,
   },
 ]
 
-// Intervalos mínimos en días entre dosis consecutivas
-// intervals[0] = días entre dosis 1→2, intervals[1] = días entre dosis 2→3, etc.
-// Fuente: Tablas 1 y 2, Guía Calendarios Acelerados ANDAVAC 2026
-// ANDAVAC 2026 — actualizar anualmente
 export const VACCINE_INTERVALS: VaccineIntervals[] = [
-  // ── Menores de 7 años (Tabla 1) ─────────────────────────────────────────
-  { vaccineId: 'dtpa',      intervals: [42, 56, 180] },    // 6sem | 8sem | 6 meses
-  { vaccineId: 'hepb',      intervals: [56, 180] },         // 8sem | 6 meses
-  { vaccineId: 'polio',     intervals: [42, 56, 180] },    // 6sem | 8sem | 6 meses
-  { vaccineId: 'hib',       intervals: [56, 180] },         // 8sem | 6 meses
-  { vaccineId: 'pneumo',    intervals: [28, 28, 56] },     // 4sem | 4sem | 8sem
-  { vaccineId: 'menb',      intervals: [56, 180] },         // 8sem | 6 meses (3ª = refuerzo)
-  { vaccineId: 'menacwy',   intervals: [60] },              // 2 meses
-  { vaccineId: 'mmr',       intervals: [28] },              // 4sem (atenuada)
-  { vaccineId: 'varicella', intervals: [28] },              // 4sem (atenuada)
-  { vaccineId: 'rotavirus', intervals: [28] },              // 4sem (atenuada oral)
-  // ── A partir de 7 años (Tabla 2) ────────────────────────────────────────
-  { vaccineId: 'tdtdpa',    intervals: [28, 180, 365, 365] }, // 4sem | 6m | 1año | 1año
-  { vaccineId: 'hpv',       intervals: [60, 120] },            // 2m | 4m (pauta 3 dosis)
+  { vaccineId: 'dtpa',      intervals: [42, 56, 180] },
+  { vaccineId: 'hepb',      intervals: [56, 180] },
+  { vaccineId: 'polio',     intervals: [42, 56, 180] },
+  { vaccineId: 'hib',       intervals: [56, 180] },
+  { vaccineId: 'pneumo',    intervals: [28, 28, 56] },
+  { vaccineId: 'menb',      intervals: [56, 180] },
+  { vaccineId: 'menacwy',   intervals: [60] },
+  { vaccineId: 'mmr',       intervals: [28] },
+  { vaccineId: 'varicella', intervals: [28] },
+  { vaccineId: 'rotavirus', intervals: [28] },
+  { vaccineId: 'tdtdpa',    intervals: [28, 180, 365, 365] },
+  { vaccineId: 'hpv',       intervals: [60, 120] },
 ]
 
 export function getVaccineDef(id: VaccineId): VaccineDef {
@@ -131,4 +125,11 @@ export function getVaccineDef(id: VaccineId): VaccineDef {
 
 export function getIntervals(id: VaccineId): number[] {
   return VACCINE_INTERVALS.find(i => i.vaccineId === id)?.intervals ?? []
+}
+
+// La regla de separación de 28 días entre atenuadas es para atenuadas inyectables.
+// Rotavirus es oral y no entra en esa regla.
+export function requiresLiveSpacing(id: VaccineId): boolean {
+  const def = getVaccineDef(id)
+  return def.type === 'live' && def.route !== 'oral'
 }

@@ -29,7 +29,7 @@ La app guía al profesional en tres pasos:
 ## Stack técnico
 
 React 19 + TypeScript + Vite + Tailwind CSS v4, con Vitest para el motor de
-reglas (74 tests).
+reglas y los componentes principales.
 
 ## Desarrollo local
 

@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Local working notes and source design exports
+AGENTS.md
+LOGICA_Y_CAMBIOS.md
+logo/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { generateCatchupPlan } from '../../src/engine/catchupEngine'
-import { VaccineStatus } from '../../src/types'
+import type { VaccineId, VaccineStatus } from '../../src/types'
 
-function missing(id: string, required = 3): VaccineStatus {
-  return { vaccineId: id as any, required, received: 0, valid: 0, missing: required, status: 'missing' }
+function missing(id: VaccineId, required = 3): VaccineStatus {
+  return { vaccineId: id, required, received: 0, valid: 0, missing: required, status: 'missing' }
 }
 
-function partial(id: string, valid: number, required: number): VaccineStatus {
-  return { vaccineId: id as any, required, received: valid, valid, missing: required - valid, status: 'partial' }
+function partial(id: VaccineId, valid: number, required: number): VaccineStatus {
+  return { vaccineId: id, required, received: valid, valid, missing: required - valid, status: 'partial' }
 }
 
-function complete(id: string): VaccineStatus {
-  return { vaccineId: id as any, required: 2, received: 2, valid: 2, missing: 0, status: 'complete' }
+function complete(id: VaccineId): VaccineStatus {
+  return { vaccineId: id, required: 2, received: 2, valid: 2, missing: 0, status: 'complete' }
 }
 
 const evalDate = new Date('2025-01-15')

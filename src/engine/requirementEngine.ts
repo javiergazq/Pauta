@@ -8,6 +8,43 @@ import { calculateAge } from './ageCalculator'
 // Solo nacidos a partir del 1/10/2021 entran en el calendario sistemático de MenB
 const MEN_B_CUTOFF = new Date('2021-10-01')
 
+// ── Rotavirus: validación de ventana por edad exacta en semanas ──────────────
+// Rotarix exige iniciar antes de las 20 semanas de vida y completar (2 dosis,
+// intervalo mínimo 4 semanas) antes de las 24 — a diferencia del resto de
+// vacunas, no se puede tratar como rescate normal: si no se puede asegurar que
+// la pauta cabe en esa ventana, el motor no debe recomendarla automáticamente.
+export interface RotavirusGuidance {
+  recommend: boolean // true: incluir con normalidad en el plan de hoy/rescate
+  caution?: string   // aviso específico cuando recommend === false
+}
+
+export function evaluateRotavirusGuidance(
+  ageWeeks: number,
+  validDoses: number,
+  firstDoseDate: Date | null,
+  evaluationDate: Date
+): RotavirusGuidance {
+  if (validDoses >= 2) return { recommend: true } // pauta completa
+
+  if (validDoses === 0) {
+    if (ageWeeks < 20) return { recommend: true }
+    return {
+      recommend: false,
+      caution: 'Rotavirus: valorar edad exacta. La pauta Rotarix debe poder completarse antes de las 24 semanas; si no es posible, no iniciar automáticamente.',
+    }
+  }
+
+  // 1 dosis puesta: solo recomendar la 2ª si se conoce la fecha de la 1ª,
+  // se cumple el intervalo mínimo de 4 semanas y aún queda margen hasta las 24.
+  const intervalMet = firstDoseDate !== null && differenceInWeeks(evaluationDate, firstDoseDate) >= 4
+  if (intervalMet && ageWeeks < 24) return { recommend: true }
+
+  return {
+    recommend: false,
+    caution: 'Rotavirus: confirma la fecha exacta de la 1ª dosis y que han pasado al menos 4 semanas — la pauta debe completarse antes de las 24 semanas de vida.',
+  }
+}
+
 export function getRequirements(patient: PatientData): RequiredVaccine[] {
   const { birthDate, evaluationDate, conditions } = patient
   const age = calculateAge(birthDate, evaluationDate)

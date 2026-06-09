@@ -11,40 +11,37 @@ interface Props {
 
 export function VisitCard({ visit, isToday }: Props) {
   if (visit.vaccines.length === 0) return null
-
-  // La tarjeta HOY se renderiza en ResultPanel directamente como hero
-  // Este componente es para las visitas futuras
   if (isToday) return null
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-col items-start gap-1 border-b border-gray-100 bg-gray-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <span className="font-bold text-gray-700">{visit.label}</span>
         {visit.vaccines[0]?.minDate && (
           <span className="text-xs text-gray-400">
-            desde {format(visit.vaccines[0].minDate, "d MMM yyyy", { locale: es })}
+            desde {format(visit.vaccines[0].minDate, 'd MMM yyyy', { locale: es })}
           </span>
         )}
       </div>
 
-      <div className="px-4 py-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 px-3 py-3 sm:px-4">
         {visit.vaccines.map(v => {
           const vaccine = VACCINES.find(vac => vac.id === v.vaccineId)!
           return (
             <div
               key={v.vaccineId}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-white text-sm font-semibold ${vaccine.color}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-white ${vaccine.color}`}
             >
               {vaccine.shortName}
-              <span className="opacity-75 text-xs">{v.doseNumber}ª</span>
+              <span className="text-xs opacity-75">{v.doseNumber}ª</span>
             </div>
           )
         })}
       </div>
 
       {visit.hasLiveVaccines && (
-        <p className="text-xs text-amber-600 px-4 pb-3 flex items-start gap-1.5">
-          <Warning size={14} weight="fill" className="flex-shrink-0 mt-0.5" />
+        <p className="flex items-start gap-1.5 px-3 pb-3 text-xs text-amber-600 sm:px-4">
+          <Warning size={14} weight="fill" className="mt-0.5 flex-shrink-0" />
           Vacunas atenuadas: administrar el mismo día o separar 28 días o más
         </p>
       )}
