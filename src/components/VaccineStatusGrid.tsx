@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { CaretDown } from '@phosphor-icons/react'
-import type { RequiredVaccine, VaccineId, DoseCount } from '../types'
+import type { RequiredVaccine, VaccineId, DoseCount, VaccineDocumentationDetail } from '../types'
 import { VACCINES } from '../data/vaccines'
 
 interface Props {
   requirements: RequiredVaccine[]
   doseCounts: DoseCount[]
+  documentationDetails?: VaccineDocumentationDetail[]
   onChange: (vaccineId: VaccineId, count: number) => void
+  onDocumentationDetailChange?: (vaccineId: VaccineId, detail: Partial<VaccineDocumentationDetail>) => void
 }
 
 const HEXAVALENT_IDS: VaccineId[] = ['dtpa', 'hepb', 'polio', 'hib']
 
-export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props) {
+export function VaccineStatusGrid({
+  requirements,
+  doseCounts,
+  documentationDetails = [],
+  onChange,
+  onDocumentationDetailChange,
+}: Props) {
   const [showNonApplicable, setShowNonApplicable] = useState(false)
   const applicable = requirements.filter(r => r.applicable)
   const nonApplicable = requirements.filter(r => !r.applicable)
@@ -33,6 +41,51 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
         onChange(vaccineId, count)
       }
     })
+  }
+
+  function renderDocumentationDetail(vaccineId: VaccineId, count: number) {
+    if (count === 0 || !onDocumentationDetailChange) return null
+    const detail = documentationDetails.find(d => d.vaccineId === vaccineId)
+
+    if (vaccineId === 'polio') {
+      return (
+        <label className="mt-2 block text-xs font-semibold text-slate-600" htmlFor="polio-documentation-type">
+          Tipo documentado
+          <select
+            id="polio-documentation-type"
+            value={detail?.polioType ?? 'standard_ipv_or_trivalent'}
+            onChange={event => onDocumentationDetailChange(vaccineId, { polioType: event.target.value as VaccineDocumentationDetail['polioType'] })}
+            className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm outline-none transition focus:border-[var(--pauta-aqua)] focus:ring-2 focus:ring-[color:rgba(14,167,181,0.16)]"
+          >
+            <option value="standard_ipv_or_trivalent">VPI / VPO trivalente o pauta mixta</option>
+            <option value="exclusive_bivalent_opv_after_2016">Solo VPO bivalente desde abril 2016</option>
+            <option value="unknown">No consta tipo de polio</option>
+          </select>
+        </label>
+      )
+    }
+
+    if (vaccineId === 'mmr') {
+      return (
+        <label className="mt-2 block text-xs font-semibold text-slate-600" htmlFor="mmr-documentation-type">
+          Componentes documentados
+          <select
+            id="mmr-documentation-type"
+            value={detail?.mmrType ?? 'complete_mmr'}
+            onChange={event => onDocumentationDetailChange(vaccineId, { mmrType: event.target.value as VaccineDocumentationDetail['mmrType'] })}
+            className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm outline-none transition focus:border-[var(--pauta-aqua)] focus:ring-2 focus:ring-[color:rgba(14,167,181,0.16)]"
+          >
+            <option value="complete_mmr">Triple vírica completa</option>
+            <option value="measles_rubella_only">Sarampión + rubeola, sin parotiditis</option>
+            <option value="measles_only">Solo sarampión</option>
+            <option value="rubella_only">Solo rubeola</option>
+            <option value="unknown">No constan componentes</option>
+          </select>
+        </label>
+      )
+    }
+
+    return null
   }
 
   function renderDoseRow(req: RequiredVaccine, variant: 'standard' | 'extra' = 'standard') {
@@ -77,6 +130,8 @@ export function VaccineStatusGrid({ requirements, doseCounts, onChange }: Props)
             {count} dosis registrada{count > 1 ? 's' : ''}
           </p>
         )}
+
+        {renderDocumentationDetail(req.vaccineId, count)}
 
         {req.note && (
           <p className="mt-1 text-xs italic text-slate-500">{req.note}</p>

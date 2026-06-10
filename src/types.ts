@@ -113,17 +113,36 @@ export interface DoseWithDate {
 
 export type InputMode = 'count' | 'dates'
 
+export type PolioDocumentationType =
+  | 'standard_ipv_or_trivalent'
+  | 'exclusive_bivalent_opv_after_2016'
+  | 'unknown'
+
+export type MmrDocumentationType =
+  | 'complete_mmr'
+  | 'measles_rubella_only'
+  | 'measles_only'
+  | 'rubella_only'
+  | 'unknown'
+
+export interface VaccineDocumentationDetail {
+  vaccineId: VaccineId
+  polioType?: PolioDocumentationType
+  mmrType?: MmrDocumentationType
+}
+
 export interface VaccinationInput {
   mode: InputMode
   doseCounts: DoseCount[]
   doseDates: DoseWithDate[]
+  documentationDetails?: VaccineDocumentationDetail[]
 }
 
 // ─── Validación de dosis (solo Modo C) ───────────────────────────────────────
 export interface DoseValidity {
   doseIndex: number
   isValid: boolean
-  reason?: 'too_early' // administrada ≥5 días antes del intervalo mínimo
+  reason?: 'too_early' | 'before_min_age' // intervalo insuficiente o edad mínima no alcanzada
 }
 
 // ─── Estado vacunal por vacuna ────────────────────────────────────────────────

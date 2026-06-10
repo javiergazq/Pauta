@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check, ArrowRight } from '@phosphor-icons/react'
 import type {
   PatientData, VaccinationInput, VaccinationResult,
-  VaccineId, DoseCount, DoseWithDate,
+  VaccineId, DoseCount, DoseWithDate, VaccineDocumentationDetail,
 } from './types'
 import { PatientForm } from './components/PatientForm'
 import { VaccineStatusGrid } from './components/VaccineStatusGrid'
@@ -49,6 +49,7 @@ export default function App() {
   const [patient, setPatient] = useState<PatientData | null>(null)
   const [doseCounts, setDoseCounts] = useState<DoseCount[]>([])
   const [doseDates, setDoseDates] = useState<DoseWithDate[]>([])
+  const [documentationDetails, setDocumentationDetails] = useState<VaccineDocumentationDetail[]>([])
   const [result, setResult] = useState<VaccinationResult | null>(null)
 
   function handlePatientSubmit(data: PatientData) {
@@ -56,6 +57,7 @@ export default function App() {
     setPatient(data)
     setDoseCounts(reqs.map(r => ({ vaccineId: r.vaccineId, count: 0 })))
     setDoseDates(reqs.map(r => ({ vaccineId: r.vaccineId, dates: [] })))
+    setDocumentationDetails([])
     setStep('status')
   }
 
@@ -72,6 +74,14 @@ export default function App() {
     }))
   }
 
+  function handleDocumentationDetailChange(vaccineId: VaccineId, detail: Partial<VaccineDocumentationDetail>) {
+    setDocumentationDetails(prev => {
+      const current = prev.find(d => d.vaccineId === vaccineId)
+      if (!current) return [...prev, { vaccineId, ...detail }]
+      return prev.map(d => d.vaccineId === vaccineId ? { ...d, ...detail } : d)
+    })
+  }
+
   function handleCalculate() {
     if (!patient) return
     const hasDates = doseDates.some(d => d.dates.some(Boolean))
@@ -79,6 +89,7 @@ export default function App() {
       mode: hasDates ? 'dates' : 'count',
       doseCounts,
       doseDates,
+      documentationDetails,
     }
     setResult(evaluatePatient(patient, input))
     setStep('result')
@@ -89,6 +100,7 @@ export default function App() {
     setPatient(null)
     setDoseCounts([])
     setDoseDates([])
+    setDocumentationDetails([])
     setResult(null)
   }
 
@@ -175,11 +187,14 @@ export default function App() {
             <VaccineStatusGrid
               requirements={requirements}
               doseCounts={doseCounts}
+              documentationDetails={documentationDetails}
               onChange={handleDoseCountChange}
+              onDocumentationDetailChange={handleDocumentationDetailChange}
             />
 
             <DoseDateInputs
               requirements={requirements}
+              doseCounts={doseCounts}
               doseDates={doseDates}
               onChange={handleDoseDateChange}
             />

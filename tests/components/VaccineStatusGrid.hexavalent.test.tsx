@@ -65,4 +65,40 @@ describe('VaccineStatusGrid hexavalent shortcut', () => {
 
     expect(onChange).toHaveBeenCalledWith('varicella', 1)
   })
+
+  it('emits documentation details for polio and TV when recorded doses need clarification', () => {
+    const onChange = vi.fn()
+    const onDocumentationDetailChange = vi.fn()
+    const docRequirements: RequiredVaccine[] = [
+      { vaccineId: 'polio', minDoses: 3, applicable: true },
+      { vaccineId: 'mmr', minDoses: 2, applicable: true },
+    ]
+    const docDoseCounts: DoseCount[] = [
+      { vaccineId: 'polio', count: 1 },
+      { vaccineId: 'mmr', count: 1 },
+    ]
+
+    render(
+      <VaccineStatusGrid
+        requirements={docRequirements}
+        doseCounts={docDoseCounts}
+        onChange={onChange}
+        onDocumentationDetailChange={onDocumentationDetailChange}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Tipo documentado'), {
+      target: { value: 'exclusive_bivalent_opv_after_2016' },
+    })
+    fireEvent.change(screen.getByLabelText('Componentes documentados'), {
+      target: { value: 'measles_rubella_only' },
+    })
+
+    expect(onDocumentationDetailChange).toHaveBeenCalledWith('polio', {
+      polioType: 'exclusive_bivalent_opv_after_2016',
+    })
+    expect(onDocumentationDetailChange).toHaveBeenCalledWith('mmr', {
+      mmrType: 'measles_rubella_only',
+    })
+  })
 })

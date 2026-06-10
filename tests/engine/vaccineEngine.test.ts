@@ -74,6 +74,149 @@ describe('evaluatePatient — Modo B (conteo)', () => {
   })
 })
 
+describe('evaluatePatient - detalles documentales de vacunas importadas', () => {
+  it('no contabiliza polio documentada exclusivamente como VPO bivalente posterior a abril de 2016', () => {
+    const patient = makePatient('2021-06-08', '2026-06-08')
+    const input: VaccinationInput = {
+      mode: 'count',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 4 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 4 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 2 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [],
+      documentationDetails: [
+        { vaccineId: 'polio', polioType: 'exclusive_bivalent_opv_after_2016' },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const polio = result.vaccineStatuses.find(s => s.vaccineId === 'polio')!
+    const allPlanVaccines = result.catchupPlan.flatMap(p => p.vaccines.map(v => v.vaccineId))
+
+    expect(polio.received).toBe(4)
+    expect(polio.valid).toBe(0)
+    expect(polio.status).toBe('missing')
+    expect(result.systematicStatuses.find(s => s.vaccineId === 'polio')?.status).toBe('overdue')
+    expect(allPlanVaccines).toContain('polio')
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'polio')?.message).toMatch(/VPO bivalente/)
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'polio')?.message).toMatch(/VPI/)
+  })
+
+  it('mantiene polio al dia si la documentacion indica VPI, VPO trivalente o pauta mixta', () => {
+    const patient = makePatient('2021-06-08', '2026-06-08')
+    const input: VaccinationInput = {
+      mode: 'count',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 4 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 4 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 2 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [],
+      documentationDetails: [
+        { vaccineId: 'polio', polioType: 'standard_ipv_or_trivalent' },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const polio = result.vaccineStatuses.find(s => s.vaccineId === 'polio')!
+    const allPlanVaccines = result.catchupPlan.flatMap(p => p.vaccines.map(v => v.vaccineId))
+
+    expect(polio.valid).toBe(4)
+    expect(result.systematicStatuses.find(s => s.vaccineId === 'polio')?.status).toBe('up_to_date')
+    expect(allPlanVaccines).not.toContain('polio')
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'polio')).toBeUndefined()
+  })
+
+  it('no contabiliza sarampion/rubeola sin parotiditis como triple virica completa', () => {
+    const patient = makePatient('2024-01-15', '2026-07-15')
+    const input: VaccinationInput = {
+      mode: 'count',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 3 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 3 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 1 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [],
+      documentationDetails: [
+        { vaccineId: 'mmr', mmrType: 'measles_rubella_only' },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const mmr = result.vaccineStatuses.find(s => s.vaccineId === 'mmr')!
+    const allPlanVaccines = result.catchupPlan.flatMap(p => p.vaccines.map(v => v.vaccineId))
+
+    expect(mmr.received).toBe(2)
+    expect(mmr.valid).toBe(0)
+    expect(mmr.status).toBe('missing')
+    expect(allPlanVaccines).toContain('mmr')
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'mmr')?.message).toMatch(/parotiditis/)
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'mmr')?.message).toMatch(/triple vírica completa/)
+  })
+
+  it('mantiene TV completa si la documentacion indica triple virica', () => {
+    const patient = makePatient('2024-01-15', '2026-07-15')
+    const input: VaccinationInput = {
+      mode: 'count',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 3 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 3 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 1 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [],
+      documentationDetails: [
+        { vaccineId: 'mmr', mmrType: 'complete_mmr' },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const mmr = result.vaccineStatuses.find(s => s.vaccineId === 'mmr')!
+    const allPlanVaccines = result.catchupPlan.flatMap(p => p.vaccines.map(v => v.vaccineId))
+
+    expect(mmr.valid).toBe(2)
+    expect(result.systematicStatuses.find(s => s.vaccineId === 'mmr')?.status).toBe('up_to_date')
+    expect(allPlanVaccines).not.toContain('mmr')
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'mmr')).toBeUndefined()
+  })
+})
+
 describe('evaluatePatient — rotavirus: ventana límite (no se trata como rescate normal)', () => {
   it('16 semanas y 0 dosis → dentro de ventana segura: RV aparece con normalidad, sin aviso', () => {
     const patient = makePatient('2026-02-09', '2026-06-01') // exactamente 16 semanas
@@ -248,6 +391,225 @@ describe('evaluatePatient — Hallazgo E: VVZ due_today a los 37 meses con 1 dos
 })
 
 describe('evaluatePatient — Modo C (fechas)', () => {
+  it('no cuenta una primera dosis de TV administrada antes de los 11 meses', () => {
+    const patient = makePatient('2024-01-15', '2026-07-15') // 30 meses
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 4 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 4 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 1 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        {
+          vaccineId: 'mmr',
+          dates: [
+            new Date('2024-09-15'), // 8 meses: no debe contar como TV válida
+            new Date('2026-01-15'), // 24 meses: cuenta como 1ª válida
+          ],
+        },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const mmr = result.vaccineStatuses.find(s => s.vaccineId === 'mmr')!
+
+    expect(mmr.valid).toBe(1)
+    expect(mmr.missing).toBe(1)
+    expect(mmr.status).toBe('partial')
+    expect(mmr.doseValidity?.[0]).toMatchObject({ isValid: false, reason: 'before_min_age' })
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'mmr')?.message).toMatch(/edad mínima/)
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'mmr')?.message).toMatch(/11 meses/)
+    expect(result.systematicStatuses.find(s => s.vaccineId === 'mmr')?.status).toBe('due_today')
+    expect(result.catchupPlan.find(p => p.label === 'HOY')?.vaccines.some(v => v.vaccineId === 'mmr')).toBe(true)
+  })
+
+  it('no cuenta varicela administrada antes de los 12 meses y muestra aviso', () => {
+    const patient = makePatient('2024-01-15', '2026-07-15') // 30 meses
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 4 },
+        { vaccineId: 'hepb',      count: 3 },
+        { vaccineId: 'polio',     count: 4 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 1 },
+        { vaccineId: 'menb',      count: 2 },
+        { vaccineId: 'menacwy',   count: 1 },
+        { vaccineId: 'mmr',       count: 2 },
+        { vaccineId: 'varicella', count: 2 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        {
+          vaccineId: 'varicella',
+          dates: [
+            new Date('2024-12-15'), // 11 meses: no debe contar como VVZ válida
+            new Date('2026-01-15'),
+          ],
+        },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const varicella = result.vaccineStatuses.find(s => s.vaccineId === 'varicella')!
+
+    expect(varicella.valid).toBe(1)
+    expect(varicella.missing).toBe(1)
+    expect(varicella.doseValidity?.[0]).toMatchObject({ isValid: false, reason: 'before_min_age' })
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'varicella')?.message).toMatch(/12 meses/)
+  })
+
+  it('hereda la reconciliación principal: 5 meses con 2 hexavalentes fechadas no administra 3ª hoy', () => {
+    const patient = makePatient('2026-01-08', '2026-06-08')
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 2 },
+        { vaccineId: 'hepb',      count: 2 },
+        { vaccineId: 'polio',     count: 2 },
+        { vaccineId: 'hib',       count: 2 },
+        { vaccineId: 'pneumo',    count: 0 },
+        { vaccineId: 'menb',      count: 0 },
+        { vaccineId: 'menacwy',   count: 0 },
+        { vaccineId: 'mmr',       count: 0 },
+        { vaccineId: 'varicella', count: 0 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        ...(['dtpa', 'hepb', 'polio', 'hib'] satisfies VaccineId[]).map(vaccineId => ({
+          vaccineId,
+          dates: [new Date('2026-03-08'), new Date('2026-05-08')],
+        })),
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const today = result.catchupPlan.find(p => p.label === 'HOY')?.vaccines.map(v => v.vaccineId) ?? []
+
+    for (const id of ['dtpa', 'hepb', 'polio', 'hib'] satisfies VaccineId[]) {
+      expect(result.systematicStatuses.find(s => s.vaccineId === id)?.status).toBe('up_to_date')
+      expect(today).not.toContain(id)
+    }
+    expect(today).toEqual(expect.arrayContaining(['pneumo', 'menacwy', 'menb']))
+  })
+
+  it('hereda el ajuste MenB en modo fechas: inicio a 7 meses programa 2ª a +2 meses', () => {
+    const patient = makePatient('2025-11-08', '2026-06-08')
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 1 },
+        { vaccineId: 'hepb',      count: 1 },
+        { vaccineId: 'polio',     count: 1 },
+        { vaccineId: 'hib',       count: 1 },
+        { vaccineId: 'pneumo',    count: 0 },
+        { vaccineId: 'menb',      count: 0 },
+        { vaccineId: 'menacwy',   count: 0 },
+        { vaccineId: 'mmr',       count: 0 },
+        { vaccineId: 'varicella', count: 0 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        ...(['dtpa', 'hepb', 'polio', 'hib'] satisfies VaccineId[]).map(vaccineId => ({
+          vaccineId,
+          dates: [new Date('2026-01-08')],
+        })),
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+
+    expect(result.catchupPlan.find(p => p.label === 'HOY')?.vaccines)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ vaccineId: 'menb', doseNumber: 1 })]))
+    expect(result.catchupPlan.find(p => p.label === '+1 mes')?.vaccines)
+      .not.toEqual(expect.arrayContaining([expect.objectContaining({ vaccineId: 'menb' })]))
+    expect(result.catchupPlan.find(p => p.label === '+2 meses')?.vaccines)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ vaccineId: 'menb', doseNumber: 2 })]))
+  })
+
+  it('mantiene vacunas no aplicables registradas por recuento aunque otra vacuna use fechas', () => {
+    const patient = makePatient('2026-01-08', '2026-06-08') // 5 meses: varicela no aplicable
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 2 },
+        { vaccineId: 'hepb',      count: 2 },
+        { vaccineId: 'polio',     count: 2 },
+        { vaccineId: 'hib',       count: 2 },
+        { vaccineId: 'pneumo',    count: 0 },
+        { vaccineId: 'menb',      count: 0 },
+        { vaccineId: 'menacwy',   count: 0 },
+        { vaccineId: 'mmr',       count: 0 },
+        { vaccineId: 'varicella', count: 1 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        { vaccineId: 'dtpa', dates: [new Date('2026-03-08'), new Date('2026-05-08')] },
+        { vaccineId: 'varicella', dates: [] },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const varicella = result.vaccineStatuses.find(s => s.vaccineId === 'varicella')!
+
+    expect(varicella.status).toBe('not_applicable')
+    expect(varicella.received).toBe(1)
+    expect(result.vaccineCautions.find(c => c.vaccineId === 'varicella')?.message).toMatch(/1 dosis registrada/)
+  })
+
+  it('valida edad mínima en fechas de vacunas no aplicables por edad actual', () => {
+    const patient = makePatient('2026-01-08', '2026-06-08') // 5 meses: varicela no aplicable
+    const input: VaccinationInput = {
+      mode: 'dates',
+      doseCounts: [
+        { vaccineId: 'dtpa',      count: 2 },
+        { vaccineId: 'hepb',      count: 2 },
+        { vaccineId: 'polio',     count: 2 },
+        { vaccineId: 'hib',       count: 2 },
+        { vaccineId: 'pneumo',    count: 0 },
+        { vaccineId: 'menb',      count: 0 },
+        { vaccineId: 'menacwy',   count: 0 },
+        { vaccineId: 'mmr',       count: 0 },
+        { vaccineId: 'varicella', count: 1 },
+        { vaccineId: 'rotavirus', count: 0 },
+        { vaccineId: 'tdtdpa',    count: 0 },
+        { vaccineId: 'hpv',       count: 0 },
+      ],
+      doseDates: [
+        { vaccineId: 'dtpa', dates: [new Date('2026-03-08'), new Date('2026-05-08')] },
+        { vaccineId: 'varicella', dates: [new Date('2026-05-08')] },
+      ],
+    }
+
+    const result = evaluatePatient(patient, input)
+    const varicella = result.vaccineStatuses.find(s => s.vaccineId === 'varicella')!
+
+    expect(varicella.status).toBe('not_applicable')
+    expect(varicella.received).toBe(1)
+    expect(varicella.doseValidity?.[0]).toMatchObject({ isValid: false, reason: 'before_min_age' })
+    expect(result.vaccineCautions.find(c =>
+      c.vaccineId === 'varicella' && c.message.includes('12 meses')
+    )).toBeDefined()
+  })
+
   it('usa fechas por vacuna sin ignorar los recuentos del resto', () => {
     const patient = makePatient('2021-06-08', '2026-06-08') // 5 años
     const input: VaccinationInput = {

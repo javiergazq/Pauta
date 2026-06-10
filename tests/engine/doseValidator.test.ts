@@ -19,6 +19,14 @@ describe('validateDoses — intervalos correctos', () => {
     expect(result[0].isValid).toBe(true)
   })
 
+  it('marca inválida una dosis administrada antes de la edad mínima configurada', () => {
+    const result = validateDoses([new Date('2024-11-30')], [], {
+      birthDate: new Date('2024-01-01'),
+      minimumAge: { unit: 'months', value: 11, label: '11 meses' },
+    })
+    expect(result[0]).toMatchObject({ isValid: false, reason: 'before_min_age' })
+  })
+
   it('array vacío devuelve array vacío', () => {
     expect(validateDoses([], DTPA)).toHaveLength(0)
   })

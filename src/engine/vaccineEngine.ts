@@ -6,8 +6,77 @@ import { getRequirements, evaluateRotavirusGuidance } from './requirementEngine'
 import { validateDoses, countValidDoses } from './doseValidator'
 import { generateCatchupPlan } from './catchupEngine'
 import { evaluateSystematicStatus, buildSystematicTodayPlan } from './systematicEngine'
-import { getIntervals, requiresLiveSpacing } from '../data/vaccines'
+import { getIntervals, getMinimumAge, requiresLiveSpacing } from '../data/vaccines'
 import { getConditionWarnings } from '../data/conditionRules'
+
+function validateVaccineDates(vaccineId: VaccineStatus['vaccineId'], dates: Date[], birthDate: Date) {
+  const minimumAge = getMinimumAge(vaccineId)
+  return validateDoses(dates, getIntervals(vaccineId), {
+    birthDate,
+    minimumAge,
+  })
+}
+
+function applyDocumentationDetails(
+  status: VaccineStatus,
+  input: VaccinationInput,
+  cautions: VaccineCaution[]
+): VaccineStatus {
+  const detail = input.documentationDetails?.find(d => d.vaccineId === status.vaccineId)
+  if (!detail || status.received === 0) return status
+
+  if (status.vaccineId === 'polio') {
+    if (detail.polioType === 'exclusive_bivalent_opv_after_2016') {
+      cautions.push({
+        vaccineId: 'polio',
+        message: 'Polio: pauta documentada exclusivamente con VPO bivalente desde abril de 2016; no se contabiliza como VPI. Administrar las dosis de VPI que correspondan por edad.',
+      })
+      if (status.status === 'not_applicable') return status
+      return {
+        ...status,
+        valid: 0,
+        missing: status.required,
+        status: status.required > 0 ? 'missing' : status.status,
+      }
+    }
+
+    if (detail.polioType === 'unknown') {
+      cautions.push({
+        vaccineId: 'polio',
+        message: 'Polio: confirmar si las dosis fueron VPI, VPO trivalente/mixta o VPO bivalente posterior a abril de 2016 antes de contabilizarlas.',
+      })
+    }
+  }
+
+  if (status.vaccineId === 'mmr') {
+    const partialMmr = detail.mmrType === 'measles_rubella_only' ||
+      detail.mmrType === 'measles_only' ||
+      detail.mmrType === 'rubella_only'
+
+    if (partialMmr) {
+      cautions.push({
+        vaccineId: 'mmr',
+        message: 'TV: documentación parcial de sarampión/rubeola sin parotiditis; no se contabiliza como triple vírica completa. Completar con TV si procede.',
+      })
+      if (status.status === 'not_applicable') return status
+      return {
+        ...status,
+        valid: 0,
+        missing: status.required,
+        status: status.required > 0 ? 'missing' : status.status,
+      }
+    }
+
+    if (detail.mmrType === 'unknown') {
+      cautions.push({
+        vaccineId: 'mmr',
+        message: 'TV: confirmar que la documentación corresponde a triple vírica completa con sarampión, rubeola y parotiditis antes de contabilizarla.',
+      })
+    }
+  }
+
+  return status
+}
 
 export function evaluatePatient(
   patient: PatientData,
@@ -19,23 +88,38 @@ export function evaluatePatient(
   let usedCountOnly = false
 
   const extraRecordedVaccines: VaccineCaution[] = []
+  const documentationCautions: VaccineCaution[] = []
   const baseVaccineStatuses: VaccineStatus[] = requirements.map(req => {
     if (!req.applicable) {
       const countEntry = input.doseCounts.find(d => d.vaccineId === req.vaccineId)
       const dateEntry = input.doseDates.find(d => d.vaccineId === req.vaccineId)
+      const dates = (dateEntry?.dates.filter(Boolean) ?? []) as Date[]
+      const doseValidity = dates.length > 0
+        ? validateVaccineDates(req.vaccineId, dates, patient.birthDate)
+        : undefined
+      const receivedByDate = dates.length
       const received = input.mode === 'dates'
-        ? (dateEntry?.dates.filter(Boolean).length ?? countEntry?.count ?? 0)
+        ? Math.max(receivedByDate, countEntry?.count ?? 0)
         : countEntry?.count ?? 0
+      const invalidByAge = doseValidity?.filter(dose => dose.reason === 'before_min_age') ?? []
       if (received > 0) {
         extraRecordedVaccines.push({
           vaccineId: req.vaccineId,
           message: `${received} dosis registrada${received > 1 ? 's' : ''} aunque no corresponde al calendario actual por edad/condición. No se usa para recomendar administración automática; revisar fecha, edad de administración y validez documental.`,
         })
       }
+      if (invalidByAge.length > 0) {
+        const minimumAge = getMinimumAge(req.vaccineId)
+        extraRecordedVaccines.push({
+          vaccineId: req.vaccineId,
+          message: `${invalidByAge.length} dosis registrada${invalidByAge.length > 1 ? 's' : ''} antes de la edad mínima${minimumAge ? ` (${minimumAge.label})` : ''}; no se ha${invalidByAge.length > 1 ? 'n' : ''} contabilizado como válida${invalidByAge.length > 1 ? 's' : ''}. Revisar fecha de administración y completar pauta si procede.`,
+        })
+      }
       return {
         vaccineId: req.vaccineId,
         required: 0, received, valid: 0, missing: 0,
         status: 'not_applicable',
+        doseValidity,
       }
     }
 
@@ -57,7 +141,7 @@ export function evaluatePatient(
 
     // Modo fechas por vacuna: si esta vacuna tiene fechas, se validan intervalos.
     // Las vacunas sin fechas conservan su recuento para mantener el flujo rápido de clicks.
-    const doseValidity = validateDoses(dates, getIntervals(req.vaccineId))
+    const doseValidity = validateVaccineDates(req.vaccineId, dates, patient.birthDate)
     const valid = countValidDoses(doseValidity)
     const missing = Math.max(0, req.minDoses - valid)
     const status = missing === 0 ? 'complete' : valid === 0 ? 'missing' : 'partial'
@@ -69,13 +153,16 @@ export function evaluatePatient(
     }
   })
 
-  const vaccineStatuses: VaccineStatus[] = patient.conditions.includes('varicella_history')
+  const conditionAdjustedStatuses: VaccineStatus[] = patient.conditions.includes('varicella_history')
     ? baseVaccineStatuses.map(status =>
         status.vaccineId === 'varicella'
           ? { ...status, required: 0, missing: 0, status: 'not_applicable' as const }
           : status
       )
     : baseVaccineStatuses
+  const vaccineStatuses = conditionAdjustedStatuses.map(status =>
+    applyDocumentationDetails(status, input, documentationCautions)
+  )
 
   // Capa de calendario sistemático: decide PRIMERO si hay un retraso real.
   // El motor de rescate (generateCatchupPlan) solo se activa si lo hay —
@@ -115,7 +202,19 @@ export function evaluatePatient(
     if (!guidance.recommend) rotavirusCaution = guidance.caution ?? null
   }
 
-  const vaccineCautions: VaccineCaution[] = [...extraRecordedVaccines]
+  const vaccineCautions: VaccineCaution[] = [...extraRecordedVaccines, ...documentationCautions]
+  vaccineStatuses.forEach(status => {
+    if (status.status === 'not_applicable') return
+    const invalidByAge = status.doseValidity?.filter(dose => dose.reason === 'before_min_age') ?? []
+    if (invalidByAge.length === 0) return
+
+    const minimumAge = getMinimumAge(status.vaccineId)
+    vaccineCautions.push({
+      vaccineId: status.vaccineId,
+      message: `${invalidByAge.length} dosis registrada${invalidByAge.length > 1 ? 's' : ''} antes de la edad mínima${minimumAge ? ` (${minimumAge.label})` : ''}; no se ha${invalidByAge.length > 1 ? 'n' : ''} contabilizado como válida${invalidByAge.length > 1 ? 's' : ''}. Revisar fecha de administración y completar pauta si procede.`,
+    })
+  })
+
   const pneumoStatus = vaccineStatuses.find(s => s.vaccineId === 'pneumo')
   const pneumoDates = input.doseDates.find(d => d.vaccineId === 'pneumo')?.dates.filter(Boolean) ?? []
   if (

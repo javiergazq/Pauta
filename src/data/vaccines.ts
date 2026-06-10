@@ -2,6 +2,12 @@
 // Fuente: Guía Calendarios Acelerados ANDAVAC 2026, tablas 1 y 2.
 import type { VaccineDef, VaccineId, VaccineIntervals } from '../types'
 
+export interface VaccineMinimumAge {
+  unit: 'days' | 'months' | 'years'
+  value: number
+  label: string
+}
+
 export const VACCINES: VaccineDef[] = [
   {
     id: 'dtpa',
@@ -125,6 +131,30 @@ export function getVaccineDef(id: VaccineId): VaccineDef {
 
 export function getIntervals(id: VaccineId): number[] {
   return VACCINE_INTERVALS.find(i => i.vaccineId === id)?.intervals ?? []
+}
+
+export function getMinimumAge(id: VaccineId): VaccineMinimumAge | null {
+  switch (id) {
+    case 'dtpa':
+    case 'polio':
+    case 'hib':
+    case 'pneumo':
+    case 'menacwy':
+    case 'rotavirus':
+      return { unit: 'days', value: 42, label: '6 semanas' }
+    case 'menb':
+      return { unit: 'months', value: 2, label: '2 meses' }
+    case 'mmr':
+      return { unit: 'months', value: 11, label: '11 meses' }
+    case 'varicella':
+      return { unit: 'months', value: 12, label: '12 meses' }
+    case 'tdtdpa':
+      return { unit: 'years', value: 7, label: '7 años' }
+    case 'hpv':
+      return { unit: 'years', value: 9, label: '9 años' }
+    default:
+      return null
+  }
 }
 
 // La regla de separación de 28 días entre atenuadas es para atenuadas inyectables.
